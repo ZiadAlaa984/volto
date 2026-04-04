@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
@@ -23,17 +22,9 @@ import {
 } from "@/components/ui/form";
 import { StepProps } from "@/types/onboarding";
 import CardFooterSteps from "../CardFooterSteps";
-import { fadeInUp } from "../OnboardingForm";
+import { BasicInfoFormValues, BasicInfoSchema } from "@/lib/Schema/BasicInfoSchema";
+import { fadeInUp } from "@/lib/Animation/stepVariants";
 
-const BasicInfoSchema = z.object({
-  name: z
-    .string()
-    .min(3, "Name must be at least 3 characters")
-    .max(48, "Name must be at most 48 characters"),
-  bio: z.string().max(60, "Bio must be at most 60 characters").optional(),
-});
-
-type BasicInfoFormValues = z.infer<typeof BasicInfoSchema>;
 
 export function BasicInfoStep({ formData, onNext, onBack }: StepProps) {
   const form = useForm<BasicInfoFormValues>({
@@ -71,7 +62,7 @@ export function BasicInfoStep({ formData, onNext, onBack }: StepProps) {
                   <FormItem>
                     <FormLabel>Display Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="Ziad Alaa" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

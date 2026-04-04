@@ -8,36 +8,36 @@ import { useMutation } from "@tanstack/react-query";
 
 export function useProfile() {
   const { session } = useAuth();
-  const id = session?.user?.id;
+  const userId = session?.user?.id;
   const api = createProfileApi(session);
 
   const {
-    isPending: checkUsernamePending,
+    isPending: isCheckingUsername,
     mutateAsync: checkUsername,
     error: checkUsernameError,
   } = useMutation({
-    mutationFn: async (user_name: string) => {
-      if (!user_name) return false;
+    mutationFn: async (username: string) => {
+      if (!username) return false;
 
-      const data = await api.getAll({
-        filters: { user_name } as Partial<Profile>,
+      const matches = await api.getAll({
+        filters: { user_name: username } as Partial<Profile>,
         limit: 1,
         skipUserFilter: true,
       });
 
-      return data.length > 0;
+      return matches.length > 0;
     },
   });
 
   const {
-    isPending: updatePending,
-    mutateAsync: update,
+    isPending: isUpdating,
+    mutateAsync: updateProfile,
     error: updateError,
   } = useMutation({
     mutationFn: catchAsync(async (profileData: Partial<Profile>) => {
-      if (!profileData || !id) return false;
+      if (!profileData || !userId) return false;
 
-      const { data, error } = await api.update(id, profileData);
+      const { data, error } = await api.update(userId, profileData);
 
       if (error) throw error;
 
@@ -46,9 +46,9 @@ export function useProfile() {
   });
 
   return {
-    update,
+    updateProfile,
     checkUsername,
-    isPending: checkUsernamePending || updatePending,
+    isPending: isCheckingUsername || isUpdating,
     error: checkUsernameError || updateError,
   };
 }

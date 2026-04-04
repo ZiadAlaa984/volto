@@ -6,25 +6,26 @@ import { createLinksApi } from "@/services/instances/LinksApi";
 import { LinkItem } from "@/types/onboarding";
 import { useMutation } from "@tanstack/react-query";
 
+type NewLinkItem = Omit<LinkItem, "id" | "created_at">;
+
 export function useLinks() {
   const { session } = useAuth();
   const api = createLinksApi(session);
 
   const {
-    isPending: createPending,
-    mutateAsync: create,
-    error: createError,
+    isPending: isCreating,
+    mutateAsync: createLinks,
+    error: createLinksError,
   } = useMutation({
-    mutationFn: catchAsync(async (linksData: Omit<LinkItem, "id" | "created_at">[]) => {
-      if (!linksData?.length) return [];
-
-      return await api.bulkCreate(linksData);
+    mutationFn: catchAsync(async (links: NewLinkItem[]) => {
+      if (!links?.length) return [];
+      return api.bulkCreate(links);
     }),
   });
 
   return {
-    create,
-    isPending: createPending,
-    error: createError,
+    createLinks,
+    isPending: isCreating,
+    error: createLinksError,
   };
 }

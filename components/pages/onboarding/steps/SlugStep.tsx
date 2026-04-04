@@ -1,7 +1,6 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
@@ -22,22 +21,11 @@ import {
 } from "@/components/ui/form";
 import { StepProps } from "@/types/onboarding";
 import CardFooterSteps from "../CardFooterSteps";
-import { fadeInUp } from "../OnboardingForm";
 import { catchAsync, toastShared } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
+import { fadeInUp } from "@/lib/Animation/stepVariants";
+import { UserNameFormValues, userNameSchema } from "@/lib/Schema/userNameSchema";
 
-const userNameSchema = z.object({
-  user_name: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(48, "Username must be at most 48 characters")
-    .regex(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-      "Only lowercase letters, numbers, and hyphens allowed",
-    ),
-});
-
-type UserNameFormValues = z.infer<typeof userNameSchema>;
 
 export function SlugStep({ formData, onNext, onBack }: StepProps) {
   const { checkUsername, isPending } = useProfile();
@@ -53,7 +41,7 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
   const handleNext = form.handleSubmit(
     catchAsync(async (values) => {
       const exists = await checkUsername(values.user_name);
-
+      // check if username exists
       if (exists) {
         toastShared({
           title: "Username unavailable",
@@ -62,14 +50,12 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
         });
         return;
       }
-
+      // username is available
       toastShared({
         title: "Great choice! 🎉",
         description: "This username is available. Go ahead and claim it!",
       });
-
       onNext({ user_name: values.user_name });
-
     }),
   );
   return (
@@ -93,11 +79,11 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
                     <FormLabel>Username</FormLabel>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm shrink-0">
-                        yoursite.com/
+                        {window.location.origin}/
                       </span>
                       <FormControl>
                         <Input
-                          placeholder="john-doe"
+                          placeholder="ziad-alaa"
                           {...field}
                           onChange={(e) =>
                             field.onChange(

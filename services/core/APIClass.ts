@@ -27,7 +27,7 @@ export class APIClass<T extends Record<string, unknown>> {
   async getAll(options?: QueryOptions<T>): Promise<T[]> {
     let query = this.supabase.from(this.table).select("*");
 
-    // Only apply user_id filter when explicitly NOT skipped
+    // Only apply user_id filter when explicitly NOT skipped 
     if (this.userId && !options?.skipUserFilter) {
       query = query.eq("user_id", this.userId);
     }
@@ -54,19 +54,17 @@ export class APIClass<T extends Record<string, unknown>> {
   }
 
   // ── READ ONE ────────────────────────────────────────────────────────────────
-  async getById(user_id: string): Promise<T> {
+  async getById(id: string, column: keyof T | "user_id" = "id"): Promise<T> {
     const { data, error } = await this.supabase
       .from(this.table)
       .select("*")
-      .eq("user_id", user_id)
+      .eq(column as string, id)
       .single();
 
     if (error) throw new Error(error.message);
     return data as T;
   }
-
   async bulkCreate(payload: Omit<T, "id" | "created_at">[]): Promise<T[]> {
-
 
     const { data, error } = await this.supabase
       .from(this.table)
