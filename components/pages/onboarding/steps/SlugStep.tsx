@@ -1,36 +1,77 @@
 "use client";
 
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { StepProps } from "@/types/onboarding";
 import CardFooterSteps from "../CardFooterSteps";
+import { fadeInUp } from "../OnboardingForm";
+import { catchAsync, toastShared } from "@/lib/utils";
+import { useProfile } from "@/hooks/useProfile";
 
-const fadeInUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.3, delay } },
+const userNameSchema = z.object({
+  user_name: z
+    .string()
+    .min(3, "Username must be at least 3 characters")
+    .max(48, "Username must be at most 48 characters")
+    .regex(
+      /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
+      "Only lowercase letters, numbers, and hyphens allowed",
+    ),
 });
 
+type UserNameFormValues = z.infer<typeof userNameSchema>;
+
 export function SlugStep({ formData, onNext, onBack }: StepProps) {
-  const [slug, setSlug] = useState(formData.slug);
+  const { checkUsername, isPending } = useProfile();
+  const form = useForm<UserNameFormValues>({
+    resolver: zodResolver(userNameSchema),
+    defaultValues: { user_name: formData.user_name ?? "" },
+    mode: "onChange",
+  });
 
-  const isValid = slug.trim() !== "";
+  const slug = form.watch("user_name");
+  const isValid = form.formState.isValid;
 
-  const handleNext = () => {
-    if (isValid) onNext({ slug });
-  };
+  const handleNext = form.handleSubmit(
+    catchAsync(async (values) => {
+      const exists = await checkUsername(values.user_name);
 
+      if (exists) {
+        toastShared({
+          title: "Username unavailable",
+          description: "The selected username is already registered. Please select a different username.",
+          variant: "warning",
+        });
+        return;
+      }
+
+      toastShared({
+        title: "Great choice! 🎉",
+        description: "This username is available. Go ahead and claim it!",
+      });
+
+      onNext({ user_name: values.user_name });
+
+    }),
+  );
   return (
     <Card className="rounded-3xl shadow-md border w-full">
       <CardHeader>
@@ -39,55 +80,78 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
           Pick a unique slug for your public profile URL.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <motion.div {...fadeInUp(0)} className="space-y-2">
-          <Label htmlFor="slug">Username / Slug</Label>
-          <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm select-none shrink-0">
-              yoursite.com/
-            </span>
-            <Input
-              id="slug"
-              placeholder="john-doe"
-              value={slug}
-              onChange={(e) =>
-                setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-"))
-              }
-              className="transition-all duration-300 focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            />
-          </div>
-        </motion.div>
 
-        {/* Live preview */}
-        <motion.div
-          {...fadeInUp(0.08)}
-          className="rounded-xl bg-muted/50 border border-dashed px-4 py-3"
-        >
-          <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">
-            Preview
-          </p>
-          <motion.p
-            key={slug}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-            className="text-sm text-muted-foreground italic leading-relaxed"
-          >
-            {slug.trim() === "" ? (
-              "Your public profile URL hasn't been set yet."
-            ) : (
-              <>
-                Your profile will be at{" "}
-                <span className="font-semibold text-foreground not-italic">
-                  /{slug}
-                </span>
-                .
-              </>
-            )}
-          </motion.p>
-        </motion.div>
+      <CardContent >
+        <Form {...form}>
+          <form onSubmit={handleNext} className="space-y-4">
+            <motion.div {...fadeInUp(0)} className="space-y-2">
+              <FormField
+                control={form.control}
+                name="user_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground text-sm shrink-0">
+                        yoursite.com/
+                      </span>
+                      <FormControl>
+                        <Input
+                          placeholder="john-doe"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                .toLowerCase()
+                                .replace(/\s+/g, "-")
+                                .replace(/[^a-z0-9-]/g, ""),
+                            )
+                          }
+                        />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
+
+            <motion.div
+              {...fadeInUp(0.08)}
+              className="rounded-xl bg-muted/50 border border-dashed px-4 py-3"
+            >
+              <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">
+                Preview
+              </p>
+              <motion.p
+                key={slug}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25 }}
+                className="text-sm text-muted-foreground italic"
+              >
+                {!slug?.trim() ? (
+                  "Your public profile URL hasn't been set yet."
+                ) : (
+                  <>
+                    Your profile will be at{" "}
+                    <span className="font-semibold text-foreground not-italic">
+                      /{slug}
+                    </span>
+                  </>
+                )}
+              </motion.p>
+            </motion.div>
+          </form>
+        </Form>
       </CardContent>
-      <CardFooterSteps onNext={handleNext} isValid={isValid} isFirstStep />{" "}
+
+      <CardFooterSteps
+        onNext={handleNext}
+        onBack={onBack}
+        isValid={isValid && !isPending}
+        isLoading={isPending}
+      />
     </Card>
   );
 }

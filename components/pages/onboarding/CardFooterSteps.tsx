@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { CardFooter } from "@/components/ui/card";
-import { ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { ChevronRight, ChevronLeft, Check, Loader } from "lucide-react";
 
 type Props = {
   onBack?: () => void;
-  onNext?: () => void;
+  onNext?: (value: any) => void;
   isValid?: boolean;
   isFirstStep?: boolean;
   isLastStep?: boolean;
+  isLoading?: boolean;
 };
 
 function CardFooterSteps({
@@ -16,10 +17,11 @@ function CardFooterSteps({
   isValid = true,
   isFirstStep = false,
   isLastStep = false,
+  isLoading = false
 }: Props) {
   return (
     <CardFooter className="flex justify-between pt-2 pb-4">
-      
+
       {/* Back Button */}
       <Button
         type="button"
@@ -39,12 +41,10 @@ function CardFooterSteps({
         disabled={!isValid}
         className="rounded-2xl gap-1"
       >
-        {isLastStep ? "Finish" : "Next"}
-        {isLastStep ? (
+        {isLoading ? <Loader className="animate-spin" /> : isLastStep ? <>
+          Finish
           <Check className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
+        </> : <> Next <ChevronRight className="h-4 w-4" /></>}
       </Button>
 
     </CardFooter>

@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { SlugStep } from "./steps/SlugStep";
 import { BasicInfoStep } from "./steps/BasicInfoStep";
 import { LinksStep } from "./steps/LinksStep";
-import { FormData } from "@/types/onboarding";
+import { CardType } from "@/types/onboarding";
+import MultiStepLoaderDemo from "@/components/multi-step-loader-demo";
+import { useCard } from "@/hooks/useCard";
+import { catchAsync } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 // ─── Animation ────────────────────────────────────────────────────────────────
 
-const stepVariants = {
+export const fadeInUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3, delay } },
+});
+
+const stepVariants: Variants = {
   hidden: { opacity: 0, x: 40 },
   visible: {
     opacity: 1,
@@ -22,15 +31,21 @@ const stepVariants = {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function OnboardingPage() {
+  const { session } = useAuth();
+  const { isLoading, checkHaveCard } = useCard();
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<FormData>({
-    slug: "",
+  const [formData, setFormData] = useState<CardType>({
+    user_name: "",
     name: "",
     bio: "",
-    links: [{ title: "", url: "" }],
+    links: [{ title: "", url: "", platform: "" }],
   });
 
-  const handleNext = (data?: Partial<FormData>) => {
+
+
+
+
+  const handleNext = (data?: Partial<CardType>) => {
     if (data) setFormData((prev) => ({ ...prev, ...data }));
     setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
   };
@@ -41,18 +56,15 @@ export default function OnboardingPage() {
 
   // Each step receives formData, onNext, onBack as direct props
 
-  // ! if you want to add step 
-  // ~ add in steps array 
+  // ! if you want to add step
+  // ~ add in steps array
   // ~ add title in  Progress dots
-
 
   // * explaination how steps work
   // ~ take value from formData and send onNext and onBack in CardFooterSteps
   // ~ when you want to go to second step write  onNext({ YOU WANT TO SEND REF BY formData  }) from props
 
-
   // todo add validaton to all steps and in last step send to save and go to page /:slug
-
 
   const steps = [
     <SlugStep
@@ -72,11 +84,19 @@ export default function OnboardingPage() {
       formData={formData}
       onNext={handleNext}
       onBack={handleBack}
+      onFinish={true}
     />,
   ];
 
+  useEffect(() => {
+    if (session) {
+      checkHaveCard(session?.user?.id);
+    }
+  }, [session]);
+
   return (
     <div className="w-full max-w-lg mx-auto py-8 flex flex-col gap-6">
+
       {/* ── Progress dots ── */}
       <motion.div
         initial={{ opacity: 0, y: -16 }}

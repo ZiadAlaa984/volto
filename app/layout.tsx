@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Outfit, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/context/AuthContext";
+import QueryProvider from "@/providers/QueryProvider";
+import { ToasterClient } from "@/components/ToasterClient";
 
 const fontSans = Outfit({
   subsets: ["latin"],
@@ -22,9 +25,6 @@ export const metadata: Metadata = {
   description: "The fastest way to build apps with Next.js and Supabase",
 };
 
-
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -39,7 +39,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <QueryProvider>
+            <AuthProvider>
+              <ToasterClient />
+              {children}
+            </AuthProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
