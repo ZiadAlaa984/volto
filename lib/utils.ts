@@ -11,28 +11,42 @@ export const hasEnvVars =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-type ToastType = "success" | "error" | "info" | "warning" | "loading";
+type ToastType = "success" | "error" | "info" | "warning";
 
 type ToastProps = {
   title: string;
   description?: string;
   variant?: ToastType;
+  isLoading?: boolean;
 };
 
 export function toastShared({
   title,
   description,
   variant = "success",
+  isLoading = false,
 }: ToastProps) {
-  sileo[variant]({
-    title,
-    description,
-    fill: "fff/50",
-    styles: {
-      title: "text-white!",
-      description: "text-white/75!",
-    },
-  });
+  if (isLoading) {
+    sileo.show({
+      title,
+      description,
+      fill: "fff/50",
+      styles: {
+        title: "text-white!",
+        description: "text-white/75!",
+      },
+    });
+  } else {
+    sileo[variant]({
+      title,
+      description,
+      fill: "fff/50",
+      styles: {
+        title: "text-white!",
+        description: "text-white/75!",
+      },
+    });
+  }
 }
 
 // lib/catchAsync.ts

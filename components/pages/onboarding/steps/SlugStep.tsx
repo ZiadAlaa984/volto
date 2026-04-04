@@ -79,7 +79,7 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
                     <FormLabel>Username</FormLabel>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm shrink-0">
-                        {window.location.origin}/
+                        {typeof window !== "undefined" ? window.location.origin : ""}/
                       </span>
                       <FormControl>
                         <Input
