@@ -11,11 +11,6 @@ import { useAuth } from "@/context/AuthContext";
 import { stepVariants } from "@/lib/Animation/stepVariants";
 import { ProfilePictureStep } from "./steps/ProfilePictureStep";
 
-
-// TODO: Add Profile Picture upload
-// ^ add to form data
-
-
 const STEP_COMPONENTS = [
   { key: "slug", label: "Slug", Component: SlugStep },
   { key: "basic-info", label: "Basic Info", Component: BasicInfoStep },

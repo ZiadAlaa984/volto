@@ -1,11 +1,11 @@
-import { supabase } from "@/lib/supabase/client";
+// services/instances/cardApi.ts
+import { supabase as browserClient } from "@/lib/supabase/client";
 import { APIClass } from "@/services/core/APIClass";
 import { CardType } from "@/types/onboarding";
 import { Session } from "@supabase/supabase-js";
 
-// ── Type for your table ──────────────────────────────────────────────────────
+type CardRecord = CardType & Record<string, unknown>;
 
-
-// ── Factory — call this inside hooks/components after session is available ───
+// ── Client-side (hooks/mutations) ────────────────────────────────────────────
 export const createCardApi = (session: Session | null) =>
-  new APIClass<CardType & Record<string, unknown>>("cards", session, supabase);
+  new APIClass<CardRecord>("cards", session, browserClient);

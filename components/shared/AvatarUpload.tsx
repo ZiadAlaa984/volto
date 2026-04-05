@@ -27,8 +27,6 @@ export function AvatarUpload({
     defaultAvatar,
 }: AvatarUploadProps) {
 
-    // Convert the existing File → FileMetadata so the hook shows
-    // the preview when returning to this step
     const initialFiles = useMemo<FileMetadata[]>(() => {
         if (!value) return []
         return [{

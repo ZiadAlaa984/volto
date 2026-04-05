@@ -37,6 +37,7 @@ const CheckFilled = ({ className }: { className?: string }) => {
 
 type LoadingState = {
   text: string;
+
 };
 
 const LoaderCore = ({

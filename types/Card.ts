@@ -4,4 +4,5 @@ export interface Card {
   name: string;
   bio: string;
   created_at: string;
+  profile_picture: string;
 }
