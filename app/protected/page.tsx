@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
-
 import { createClient } from "@/lib/supabase/server";
-import { InfoIcon } from "lucide-react";
-import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
-import { Suspense } from "react";
+import Link from "next/link";
 
 async function UserDetails() {
   const supabase = await createClient();
@@ -18,8 +15,10 @@ async function UserDetails() {
 
 export default function ProtectedPage() {
   return (
-    <div>
-    dashboard
+    <div className="mx-auto">
+      <Link href="/protected/onboarding" className="text-blue-600">
+        onboarding
+      </Link>
     </div>
   );
 }

@@ -10,6 +10,7 @@ export interface LinkItem {
 
 export interface CardType {
   user_name: string;
+  profile_picture: File | null;
   name: string;
   bio: string;
   links: LinkItem[];

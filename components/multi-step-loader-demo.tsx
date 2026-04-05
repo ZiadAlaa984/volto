@@ -1,12 +1,8 @@
 
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
+import { loadingStates } from "@/lib/utils/steps";
 
-const loadingStates = [
-  { text: "Setting up your profile..." },
-  { text: "Saving your links..." },
-  { text: "Almost there..." },
-  { text: "You're all set!" },
-];
+
 
 
 type Props = {

@@ -9,14 +9,10 @@ import { useProfile } from "./useProfile";
 import { useLinks } from "./useLink";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUpload } from "./useUpload";
+import CARD_CREATION_STEPS from "@/lib/utils/steps";
 
-const CARD_CREATION_STEPS = {
-  IDLE: 0,
-  SETTING_PROFILE: 0,
-  CREATING_CARD: 1,
-  CREATING_LINKS: 2,
-  DONE: 3,
-} as const;
+
 
 const ERROR_MESSAGES = {
   DUPLICATE_CARD: "You already have a card",
@@ -31,24 +27,29 @@ function getErrorMessage(error: Error): string {
 
 export function useCard() {
   const router = useRouter();
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(CARD_CREATION_STEPS.IDLE);
+  const [step, setStep] = useState<number>(CARD_CREATION_STEPS.IDLE);
   const { session } = useAuth();
   const userId = session?.user?.id;
   const api = createCardApi(session);
   const { updateProfile } = useProfile();
   const { createLinks } = useLinks();
-
+  const { uploadFile } = useUpload();
   const createCard = useMutation({
     mutationFn: async (payload: CardType) => {
       if (!userId) return;
 
-      const { name, bio, user_name, links } = payload;
+      const { name, bio, user_name, links, profile_picture } = payload;
 
       setStep(CARD_CREATION_STEPS.SETTING_PROFILE);
       await updateProfile({ user_name });
 
+
+      setStep(CARD_CREATION_STEPS.UPLOADING_PROFILE_PICTURE);
+      const uploadedProfilePicture = await uploadFile(profile_picture);
+
+
       setStep(CARD_CREATION_STEPS.CREATING_CARD);
-      const card = (await api.create({ user_id: userId, name, bio })) as CardType;
+      const card = (await api.create({ user_id: userId, name, bio, profile_picture: uploadedProfilePicture })) as CardType;
 
       if (links?.length) {
         setStep(CARD_CREATION_STEPS.CREATING_LINKS);
@@ -60,6 +61,7 @@ export function useCard() {
           })),
         );
       }
+
 
       setStep(CARD_CREATION_STEPS.DONE);
       return user_name;

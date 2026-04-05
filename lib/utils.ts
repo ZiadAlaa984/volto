@@ -76,3 +76,4 @@ export function catchAsync<T extends unknown[], R>(
     }
   };
 }
+

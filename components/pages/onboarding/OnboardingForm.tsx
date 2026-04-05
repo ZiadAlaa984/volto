@@ -9,15 +9,23 @@ import { CardType } from "@/types/onboarding";
 import { useCard } from "@/hooks/useCard";
 import { useAuth } from "@/context/AuthContext";
 import { stepVariants } from "@/lib/Animation/stepVariants";
+import { ProfilePictureStep } from "./steps/ProfilePictureStep";
+
+
+// TODO: Add Profile Picture upload
+// ^ add to form data
+
 
 const STEP_COMPONENTS = [
   { key: "slug", label: "Slug", Component: SlugStep },
   { key: "basic-info", label: "Basic Info", Component: BasicInfoStep },
+  { key: "profile-picture", label: "Profile Picture", Component: ProfilePictureStep },
   { key: "links", label: "Links", Component: LinksStep },
 ] as const;
 
 const INITIAL_FORM_DATA: CardType = {
   user_name: "",
+  profile_picture: null,
   name: "",
   bio: "",
   links: [{ title: "", url: "", platform: "" }],
