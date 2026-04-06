@@ -47,13 +47,18 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
+  // Match top-level paths like /ziadalaa — public username routes
+  const isUsernamePath = /^\/[^/]+$/.test(request.nextUrl.pathname) &&
+    !request.nextUrl.pathname.startsWith("/login") &&
+    !request.nextUrl.pathname.startsWith("/auth");
+
   if (
     request.nextUrl.pathname !== "/" &&
     !user &&
+    !isUsernamePath &&                                          // ← added
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);

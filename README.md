@@ -111,8 +111,3 @@ Please file feedback and issues over on the [Supabase GitHub org](https://github
 
 
 
-<!-- 
-create card Page
-provider google auth && dashboard design
-dashboard card info to update && deploy to vercel and test
- -->
