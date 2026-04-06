@@ -19,6 +19,7 @@ type AuthContextValue = {
   user: User | null;
   status: AuthStatus;
   isLoading: boolean;
+  SignInProvider: (provider: "google" | "github") => Promise<void>;
   isAuthenticated: boolean;
   signOut: () => Promise<void>;
 };
@@ -62,9 +63,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus("unauthenticated");
   }, []);
 
+
+  const SignInProvider = useCallback(async (provider: "google" | "github") => {
+    await supabase.auth.signInWithOAuth({
+      provider,
+    });
+  }, []);
+
+
   return (
     <AuthContext.Provider
       value={{
+        SignInProvider,
         session,
         user: session?.user ?? null,
         status,
