@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Outfit, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/context/AuthContext";
 import QueryProvider from "@/providers/QueryProvider";
 import { ToasterClient } from "@/components/ToasterClient";
+import { AuthProvider } from "@/context/AuthContext";
+import { Suspense } from "react";
 
 const fontSans = Outfit({
   subsets: ["latin"],
@@ -39,12 +40,15 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>
+          <Suspense fallback={<div>Loading...</div>}>
             <AuthProvider>
-              <ToasterClient />
-              {children}
+              <QueryProvider>
+                <ToasterClient />
+                {children}
+              </QueryProvider>
             </AuthProvider>
-          </QueryProvider>
+          </Suspense>
+
         </ThemeProvider>
       </body>
     </html>
