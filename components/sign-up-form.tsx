@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Separator } from "./ui/separator";
+import BackComponent from "./shared/BackComponent";
 
 export function SignUpForm({
   className,
@@ -62,7 +63,9 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
+          <CardTitle className="text-2xl"> <BackComponent >
+            Sign up
+          </BackComponent></CardTitle>
           <CardDescription>Create a new account</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">

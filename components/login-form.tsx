@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Separator } from "./ui/separator";
 import { useAuth } from "@/context/AuthContext";
+import BackComponent from "./shared/BackComponent";
 
 export function LoginForm({
   className,
@@ -42,7 +43,7 @@ export function LoginForm({
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      router.push("/protected/onboarding");
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {
@@ -54,7 +55,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl"> <BackComponent >
+            Login
+          </BackComponent> </CardTitle>
           <CardDescription>
             Enter your email below to login to your account
           </CardDescription>

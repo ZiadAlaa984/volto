@@ -116,7 +116,14 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* globals.css */
+
+  [data-sileo-description] {
+    color: #ffffff !important;
   }
 }

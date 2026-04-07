@@ -133,6 +133,7 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
       </CardContent>
 
       <CardFooterSteps
+        isFirstStep={true}
         onNext={handleNext}
         onBack={onBack}
         isValid={isValid && !isPending}

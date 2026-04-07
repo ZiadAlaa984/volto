@@ -20,19 +20,21 @@ function CardFooterSteps({
   isLoading = false
 }: Props) {
   return (
-    <CardFooter className="flex justify-between pt-2 pb-4">
+    <CardFooter className={`${isFirstStep ? 'justify-end' : 'justify-between'} flex   pt-2 pb-4`}>
 
       {/* Back Button */}
-      <Button
-        type="button"
-        variant="outline"
-        onClick={onBack}
-        disabled={isFirstStep}
-        className="rounded-2xl gap-1"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        Back
-      </Button>
+      {isFirstStep ? null : (
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onBack}
+          disabled={isFirstStep}
+          className="rounded-2xl gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </Button>
+      )}
 
       {/* Next / Finish Button */}
       <Button

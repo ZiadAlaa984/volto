@@ -37,6 +37,7 @@ export function useCard() {
   const createCard = useMutation({
     mutationFn: async (payload: CardType) => {
       if (!userId) return;
+      setStep(CARD_CREATION_STEPS.IDLE);
 
       const { name, bio, user_name, links, profile_picture } = payload;
 
@@ -45,7 +46,7 @@ export function useCard() {
 
 
       setStep(CARD_CREATION_STEPS.UPLOADING_PROFILE_PICTURE);
-      const uploadedProfilePicture = await uploadFile(profile_picture);
+      const uploadedProfilePicture = await uploadFile(profile_picture as File);
 
 
       setStep(CARD_CREATION_STEPS.CREATING_CARD);
@@ -61,9 +62,8 @@ export function useCard() {
           })),
         );
       }
-
-
       setStep(CARD_CREATION_STEPS.DONE);
+
       return user_name;
     },
     onSuccess: (username) => {
@@ -80,7 +80,6 @@ export function useCard() {
         description: getErrorMessage(error),
         variant: "error",
       });
-      setStep(CARD_CREATION_STEPS.IDLE);
     },
   });
 

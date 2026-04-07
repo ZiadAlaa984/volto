@@ -43,7 +43,7 @@ export function toastShared({
       fill: "fff/50",
       styles: {
         title: "text-white!",
-        description: "text-white/75!",
+        description: "text-white/80!",
       },
     });
   }
