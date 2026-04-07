@@ -63,6 +63,11 @@ export const defaultLinkItem = (): LinkItemFormValues => ({
   url: "",
 });
 
+export const SOCIAL_KEYS = [
+  "facebook", "instagram", "twitter", "linkedin",
+  "youtube", "tiktok", "github", "snapchat", "pinterest",
+];
+
 // ── Schema ───────────────────────────────────────────────────────────────────
 
 export const linkItemSchema = z.object({

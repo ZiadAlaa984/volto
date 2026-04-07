@@ -9,7 +9,7 @@ export default async function Page({ params }: { params: { username: string } })
   const cardData = await getCardByUsername(username);
 
   return (
-    <div className="flex min-h-screen flex-col justify-center items-center">
+    <div className="flex items-center justify-center min-h-screen">
       <MainContent CardData={cardData} />
     </div>
   );
