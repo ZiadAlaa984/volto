@@ -62,7 +62,7 @@ export default function Hero() {
           >
             <Link href={hasCard ? "/protected/dashboard" : "/protected/onboarding"}>
               <ButtonDemo>
-                {isLoadingCard ? <Skeleton className="h-10 w-40" /> :
+                {isLoadingCard ? <Skeleton className="h-6 w-28" /> :
                   hasCard ? "Go to Dashboard" : "Get Started Free"}
               </ButtonDemo>
             </Link>
@@ -80,6 +80,7 @@ export default function Hero() {
         >
           <Image
             src={heroImage}
+            loading="eager"
             alt="Volto — your link-in-bio page preview"
             className="w-full h-auto"
             width={500}

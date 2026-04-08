@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { useCard } from "@/hooks/useCard";
 import { useProfile } from "@/hooks/useProfile";
-import { useAccount } from "@/hooks/useAccount"; // 👈 new import
+import { useAccount } from "@/hooks/useAccount";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -27,8 +27,8 @@ type CardItem = {
 };
 
 function SettingTab() {
-    const { profileData, isLoading: isLoadingProfile } = useProfile(); // 👈 removed deleteAccount
-    const { deleteAccount, isDeletingAccount } = useAccount();          // 👈 from useAccount
+    const { profileData, isLoading: isLoadingProfile } = useProfile();
+    const { deleteAccount, isDeletingAccount } = useAccount();
     const { session } = useAuth();
     const { deleteCard, isPending, hasCard, cardData, isLoadingCard } = useCard();
     const router = useRouter();
@@ -39,8 +39,8 @@ function SettingTab() {
             description: "Update your profile information",
             content: (
                 <div>
-                    <p>Email: {session?.user?.email}</p>
-                    <p>
+                    {session === undefined ? <Skeleton className="h-4 w-20" /> : <p>Email: {session?.user?.email}</p>}
+                    {isLoadingCard ? <Skeleton className="h-4 w-20" /> : hasCard && <p>
                         Username:{" "}
                         <Link
                             target="_blank"
@@ -49,7 +49,8 @@ function SettingTab() {
                         >
                             {profileData?.user_name}
                         </Link>
-                    </p>
+                    </p>}
+
                 </div>
             ),
         },

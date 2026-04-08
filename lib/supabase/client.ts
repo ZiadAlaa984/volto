@@ -1,10 +1,19 @@
+// lib/supabase/client.ts
 import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-  );
+// Module-level singleton — one instance for the entire app lifetime
+let client: SupabaseClient | null = null;
+
+export function getSupabaseClient() {
+  if (!client) {
+    client = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+  return client;
 }
 
-export const supabase = createClient()
+// Keep named export for backward compatibility with existing imports
+export const supabase = getSupabaseClient();

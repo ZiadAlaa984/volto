@@ -1,3 +1,4 @@
+import BackComponent from "@/components/shared/BackComponent";
 import {
     Card,
     CardContent,
@@ -14,7 +15,9 @@ export default function Page() {
                     <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl">
-                                Account Deleted
+                                <BackComponent>
+                                    Account Deleted
+                                </BackComponent>
                             </CardTitle>
                             <CardDescription>Your account has been deleted.</CardDescription>
                         </CardHeader>

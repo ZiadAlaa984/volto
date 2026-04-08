@@ -1,7 +1,6 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +17,7 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Separator } from "./ui/separator";
 import BackComponent from "./shared/BackComponent";
+import { supabase } from "@/lib/supabase/client";
 
 export function SignUpForm({
   className,
@@ -32,7 +32,6 @@ export function SignUpForm({
   const { SignInProvider } = useAuth();
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const supabase = createClient();
     setIsLoading(true);
     setError(null);
 

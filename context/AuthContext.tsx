@@ -2,9 +2,9 @@
 
 import {
   createContext, useContext, useEffect,
-  useState, useCallback, useRef, ReactNode,
+  useState, useCallback, ReactNode,
 } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -26,35 +26,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const router = useRouter();
 
-  // ✅ store router in a ref so checkDeletedAndHandle never needs
-  //    to re-create when router changes between renders
-  const routerRef = useRef(router);
-  useEffect(() => { routerRef.current = router; }, [router]);
-
-  // ✅ stable — no deps that change, uses routerRef instead of router directly
-  const checkDeletedAndHandle = useCallback(async (session: Session) => {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("deleted_at")
-      .eq("id", session.user.id)
-      .single();
-
-    if (profile?.deleted_at) {
-      await supabase.auth.signOut();
-      setSession(null);
-      setStatus("unauthenticated");
-      routerRef.current.replace("/auth/account-deleted"); // 👈 ref, not closure
-      return;
-    }
-
-    setSession(session);
-    setStatus("authenticated");
-  }, []); // ✅ empty deps — this never recreates
-
-  // ✅ empty deps — subscribes once on mount, never re-subscribes
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setStatus(session ? "authenticated" : "unauthenticated");
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event: AuthChangeEvent, session: Session | null) => {
         if (!session || event === "SIGNED_OUT") {
           setSession(null);
           setStatus("unauthenticated");
@@ -66,17 +45,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        // ✅ Defer everything outside the lock
         if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
-          await checkDeletedAndHandle(session);
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("deleted_at")
+              .eq("id", session.user.id)
+              .single();
+
+            if (profile?.deleted_at) {
+              setSession(null);
+              setStatus("unauthenticated");
+              router.replace("/auth/account-deleted");
+              await supabase.auth.signOut(); // ✅ safe now — outside the lock
+              return;
+            }
+
+            setSession(session);
+            setStatus("authenticated");
+          }, 0);
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []); // ✅ safe now because checkDeletedAndHandle is stable
+  }, [router]);
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    setSession(null);
+    setStatus("unauthenticated");
   }, []);
 
   const SignInProvider = useCallback(async (provider: "google" | "github") => {
