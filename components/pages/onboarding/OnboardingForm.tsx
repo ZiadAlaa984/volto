@@ -10,6 +10,7 @@ import { useCard } from "@/hooks/useCard";
 import { useAuth } from "@/context/AuthContext";
 import { stepVariants } from "@/lib/Animation/stepVariants";
 import { ProfilePictureStep } from "./steps/ProfilePictureStep";
+import { useRouter } from "next/navigation";
 
 const STEP_COMPONENTS = [
   { key: "slug", label: "Slug", Component: SlugStep },
@@ -26,17 +27,19 @@ const INITIAL_FORM_DATA: CardType = {
   links: [{ title: "", url: "", platform: "" }],
 };
 
+
 export default function OnboardingPage() {
-  const { session } = useAuth();
-  const { checkHasCard } = useCard();
+  const { hasCard, isLoadingCard } = useCard();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<CardType>(INITIAL_FORM_DATA);
 
   useEffect(() => {
-    if (session?.user?.id) {
-      checkHasCard(session.user.id);
+    if (!isLoadingCard && hasCard) {
+      router.push("/protected/dashboard");
     }
-  }, [session]);
+  }, [hasCard, isLoadingCard]);
+
 
   const handleNext = (data?: Partial<CardType>) => {
     if (data) setFormData((prev) => ({ ...prev, ...data }));

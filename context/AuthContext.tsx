@@ -1,19 +1,14 @@
 "use client";
 
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  ReactNode,
+  createContext, useContext, useEffect,
+  useState, useCallback, useRef, ReactNode,
 } from "react";
-import { Session, User, AuthChangeEvent } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
-// ── Types ────────────────────────────────────────────────────────────────────
 type AuthStatus = "loading" | "authenticated" | "unauthenticated";
-
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
@@ -24,76 +19,88 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
 };
 
-// ── Context ──────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ── Provider ─────────────────────────────────────────────────────────────────
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const router = useRouter();
 
+  // ✅ store router in a ref so checkDeletedAndHandle never needs
+  //    to re-create when router changes between renders
+  const routerRef = useRef(router);
+  useEffect(() => { routerRef.current = router; }, [router]);
+
+  // ✅ stable — no deps that change, uses routerRef instead of router directly
+  const checkDeletedAndHandle = useCallback(async (session: Session) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("deleted_at")
+      .eq("id", session.user.id)
+      .single();
+
+    if (profile?.deleted_at) {
+      await supabase.auth.signOut();
+      setSession(null);
+      setStatus("unauthenticated");
+      routerRef.current.replace("/auth/account-deleted"); // 👈 ref, not closure
+      return;
+    }
+
+    setSession(session);
+    setStatus("authenticated");
+  }, []); // ✅ empty deps — this never recreates
+
+  // ✅ empty deps — subscribes once on mount, never re-subscribes
   useEffect(() => {
-    // 1. Hydrate session on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setStatus(session ? "authenticated" : "unauthenticated");
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!session || event === "SIGNED_OUT") {
+          setSession(null);
+          setStatus("unauthenticated");
+          return;
+        }
 
-    // 2. Subscribe to auth state changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(
-      (event: AuthChangeEvent, session: Session | null) => {
-        setSession(session);
-        setStatus(session ? "authenticated" : "unauthenticated");
+        if (event === "TOKEN_REFRESHED") {
+          setSession(session);
+          return;
+        }
 
-        // Optional: handle specific events
-        if (event === "SIGNED_OUT") setSession(null);
-        if (event === "TOKEN_REFRESHED") console.log("Token refreshed");
+        if (event === "INITIAL_SESSION" || event === "SIGNED_IN") {
+          await checkDeletedAndHandle(session);
+        }
       }
     );
 
-    // 3. Cleanup listener on unmount
     return () => subscription.unsubscribe();
-  }, []);
+  }, []); // ✅ safe now because checkDeletedAndHandle is stable
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-    setSession(null);
-    setStatus("unauthenticated");
   }, []);
-
 
   const SignInProvider = useCallback(async (provider: "google" | "github") => {
-    await supabase.auth.signInWithOAuth({
-      provider,
-    });
+    await supabase.auth.signInWithOAuth({ provider });
   }, []);
 
-
   return (
-    <AuthContext.Provider
-      value={{
-        SignInProvider,
-        session,
-        user: session?.user ?? null,
-        status,
-        isLoading: status === "loading",
-        isAuthenticated: status === "authenticated",
-        signOut,
-      }}
-    >
+    <AuthContext.Provider value={{
+      SignInProvider,
+      session,
+      user: session?.user ?? null,
+      status,
+      isLoading: status === "loading",
+      isAuthenticated: status === "authenticated",
+      signOut,
+    }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// ── Raw context export (for useAuth) ─────────────────────────────────────────
 export { AuthContext };
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 }

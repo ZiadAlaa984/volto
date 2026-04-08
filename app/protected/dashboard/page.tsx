@@ -1,8 +1,8 @@
-import React from 'react'
+import MainContent from '@/components/pages/dashboard/MainContent'
 
 function page() {
     return (
-        <div>dashboard</div>
+        <MainContent />
     )
 }
 

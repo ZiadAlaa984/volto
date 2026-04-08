@@ -2,13 +2,12 @@
 
 import { Card, CardContent } from "./ui/card";
 import { motion, Easing } from "framer-motion";
-import { Button } from "./ui/button";
-import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import heroImage from "@/app/circle-light-mode.svg";
-import ButtonWithIconDemo from "./shared/ButtonDemo";
 import ButtonDemo from "./shared/ButtonDemo";
 import Link from "next/link";
+import { useCard } from "@/hooks/useCard";
+import { Skeleton } from "./ui/skeleton";
 
 // Shared fade-up variant factory
 const fadeUp = (delay = 0) => ({
@@ -18,6 +17,9 @@ const fadeUp = (delay = 0) => ({
 });
 
 export default function Hero() {
+  const { hasCard, isLoadingCard } = useCard();
+
+
   return (
     <Card className="relative w-full py-6 min-h-[700px]   overflow-hidden flex flex-col ">
       <CardContent >
@@ -58,9 +60,10 @@ export default function Hero() {
             {...fadeUp(0.3)}
             className="flex items-center gap-3 flex-wrap justify-center"
           >
-            <Link href={"/protected/onboarding"}>
+            <Link href={hasCard ? "/protected/dashboard" : "/protected/onboarding"}>
               <ButtonDemo>
-                Get Started Free
+                {isLoadingCard ? <Skeleton className="h-10 w-40" /> :
+                  hasCard ? "Go to Dashboard" : "Get Started Free"}
               </ButtonDemo>
             </Link>
 

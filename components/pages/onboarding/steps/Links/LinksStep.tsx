@@ -7,7 +7,7 @@ import { LinksForm } from "./LinksForm";
 import CardFooterSteps from "../../CardFooterSteps";
 
 export function LinksStep({ formData, onNext, onBack, onFinish }: StepProps) {
-  const { createCard, isLoading, step } = useCard();
+  const { createCard, isPending, step } = useCard();
 
   const {
     form,
@@ -29,7 +29,7 @@ export function LinksStep({ formData, onNext, onBack, onFinish }: StepProps) {
 
   return (
     <Card className="rounded-3xl shadow-md border w-full">
-      {isLoading && <MultiStepLoaderDemo step={step} loading={isLoading} />}
+      {isPending && <MultiStepLoaderDemo step={step} loading={isPending} />}
       <CardHeader>
         <CardTitle>Your Links</CardTitle>
         <CardDescription>Add the links you want to share on your profile.</CardDescription>
@@ -46,7 +46,7 @@ export function LinksStep({ formData, onNext, onBack, onFinish }: StepProps) {
           onSubmit={handleSubmit}
         />
       </CardContent>
-      <CardFooterSteps onBack={onBack} onNext={handleSubmit} isLoading={isLoading} isValid={isValid} isLastStep />
+      <CardFooterSteps onBack={onBack} onNext={handleSubmit} isLoading={isPending} isValid={isValid} isLastStep />
     </Card>
   );
 }
