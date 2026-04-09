@@ -6,9 +6,10 @@ import useScreenSize from "@/hooks/use-screen-size"
 import GooeySvgFilter from "@/components/fancy/filter/gooey-svg-filter"
 import { CreditCard, Link, Settings } from "lucide-react"
 import SettingTab from "./TabsContent/Setting/SettingTab"
+import InfoCardTab from "./TabsContent/InfoCard/InfoCardTab"
 
 const TAB_CONTENT = [
-    { title: "Your Card", icon: CreditCard, content: "Manage your personal card details, billing information, and payment preferences all in one place." },
+    { title: "Info Card", icon: CreditCard, content: <InfoCardTab /> },
     { title: "Links", icon: Link, content: "Organize and access all your saved links, references, and connected resources quickly." },
     { title: "Settings", icon: Settings, content: <SettingTab /> },
 ]
@@ -20,7 +21,7 @@ export default function GooeyDemo() {
     const isSafari = browserName === "Safari"
 
     return (
-        <div className="relative min-h-[600px] flex justify-center font-calendas md:text-base text-xs sm:text-sm">
+        <div className="relative min-h-[700px] flex justify-center font-calendas md:text-base text-xs sm:text-sm">
             <GooeySvgFilter id="gooey-filter" strength={screenSize.lessThan("md") ? 8 : 15} />
 
             <div className="w-full relative">

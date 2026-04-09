@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUpload } from "./useUpload";
 import CARD_CREATION_STEPS from "@/lib/utils/steps";
+import { Card } from "@/lib/Schema/CardInfoSchema";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -46,7 +47,8 @@ function useCardQuery(userId: string | undefined, api: ReturnType<typeof createC
     queryFn: async () => {
       if (!userId) return null;
       try {
-        return (await api.getById(userId, "user_id")) ?? null;
+        const card = await api.getById(userId, "user_id");
+        return card ?? null;
       } catch {
         return null;
       }
@@ -148,6 +150,70 @@ function useDeleteCardMutation(userId: string | undefined, api: ReturnType<typeo
   });
 }
 
+// ─── Update Card Mutation ─────────────────────────────────────────────────────
+
+function useUpdateCardMutation(
+  userId: string | undefined,
+  api: ReturnType<typeof createCardApi>,
+  uploadFile: ReturnType<typeof useUpload>["uploadFile"],
+  deleteFile: ReturnType<typeof useUpload>["deleteFile"]
+) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      cardId,
+      data,
+      currentProfilePicture,
+    }: {
+      cardId: string;
+      data: Partial<Card>;
+      // the existing URL already stored in DB, passed in from cardData
+      currentProfilePicture?: string | null;
+    }) => {
+      if (!cardId) return;
+
+      let updatedData: Partial<Card> = { ...data };
+
+      // ── Case 1: user picked a new image File ──────────────────────────────
+      // Delete old file from storage first to avoid orphaned files, then upload new
+      if (data.profile_picture instanceof File) {
+        if (currentProfilePicture) {
+          await deleteFile(currentProfilePicture);
+        }
+        updatedData.profile_picture = await uploadFile(data.profile_picture);
+      }
+
+      // ── Case 2: user explicitly removed their picture (set to null) ───────
+      // Delete from storage AND send null to DB
+      else if (data.profile_picture === null) {
+        if (currentProfilePicture) {
+          await deleteFile(currentProfilePicture);
+        }
+        updatedData.profile_picture = null;
+      }
+
+      // ── Case 3: profile_picture is an unchanged string URL ────────────────
+      // User didn't touch the avatar field — pass through as-is, no storage ops
+
+      await api.update(cardId, updatedData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card", userId] });
+      toastShared({ title: "Card updated successfully" });
+      router.refresh();
+    },
+    onError: (error: Error) => {
+      toastShared({
+        title: "Something went wrong",
+        description: getErrorMessage(error),
+        variant: "error",
+      });
+    },
+  });
+}
+
 // ─── Main Hook ────────────────────────────────────────────────────────────────
 
 export function useCard() {
@@ -156,9 +222,16 @@ export function useCard() {
 
   const { updateProfile } = useProfile();
   const { createLinks } = useLinks();
-  const { uploadFile } = useUpload();
+  const { uploadFile, deleteFile } = useUpload();
 
   const { data: cardData, isLoading: isLoadingCard } = useCardQuery(userId, api);
+
+  const { isPending: isUpdating, mutateAsync: updateCard } = useUpdateCardMutation(
+    userId,
+    api,
+    uploadFile,
+    deleteFile
+  );
 
   const { isPending: isCreating, mutateAsync: createCard } = useCreateCardMutation({
     userId,
@@ -176,10 +249,12 @@ export function useCard() {
     hasCard: !!cardData,
     createCard,
     deleteCard,
+    updateCard,
     isLoadingCard,
     isCreating,
     isDeleting,
-    isPending: isDeleting || isCreating,
+    isUpdating,
+    isPending: isDeleting || isCreating || isUpdating,
     error: null,
     step,
     resetStep: reset,

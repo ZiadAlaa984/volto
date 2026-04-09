@@ -1,10 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useCallback, useRef } from "react"
 import {
     formatBytes,
     useFileUpload,
     type FileMetadata,
+    type FileWithPreview,
 } from "@/hooks/use-file-upload"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
@@ -14,8 +15,8 @@ import { CircleAlertIcon, CameraIcon, UserIcon, XIcon } from 'lucide-react'
 interface AvatarUploadProps {
     maxSize?: number
     className?: string
-    value?: File | null
-    onChange?: (file: File | null) => void
+    value?: File | string | null
+    onChange?: (file: File | string | null) => void
     defaultAvatar?: string
 }
 
@@ -29,14 +30,34 @@ export function AvatarUpload({
 
     const initialFiles = useMemo<FileMetadata[]>(() => {
         if (!value) return []
-        return [{
-            id: "initial-avatar",
-            name: value.name,
-            size: value.size,
-            type: value.type,
-            url: URL.createObjectURL(value),
-        }]
+        if (value instanceof File) {
+            return [{
+                id: "initial-avatar",
+                name: value.name,
+                size: value.size,
+                type: value.type,
+                url: URL.createObjectURL(value),
+            }]
+        }
+        // String URL — no initial files needed, handled via previewUrl
+        return []
     }, []) // empty deps — seed once on mount only
+
+    // ── FIX: guard against onFilesChange firing during initial seed ──────────
+    // useFileUpload calls onFilesChange synchronously when processing initialFiles,
+    // which triggers onChange → Controller setState → warning during render.
+    // We skip the first call entirely since it's just the internal seed, not a
+    // real user interaction.
+    const isInitialMount = useRef(true)
+
+    const handleFilesChange = useCallback((files: FileWithPreview[]) => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false
+            return
+        }
+        const raw = files[0]?.file
+        onChange?.(raw instanceof File ? raw : value ?? null)
+    }, [onChange, value])
 
     const [
         { files, isDragging, errors },
@@ -55,20 +76,22 @@ export function AvatarUpload({
         accept: "image/*",
         multiple: false,
         initialFiles,
-        onFilesChange: (files) => {
-            const raw = files[0]?.file
-            // Only pass back real File objects, not FileMetadata (initial seed)
-            onChange?.(raw instanceof File ? raw : value ?? null)
-        },
+        onFilesChange: handleFilesChange,
     })
 
     const currentFile = files[0]
-    const previewUrl = currentFile?.preview || defaultAvatar
+
+    // String value = existing stored URL, File = new upload preview, fallback = defaultAvatar
+    const previewUrl = typeof value === "string"
+        ? value
+        : currentFile?.preview || defaultAvatar
 
     const handleRemove = (e: React.MouseEvent) => {
         e.stopPropagation()
         if (currentFile) {
             removeFile(currentFile.id)
+            onChange?.(null)
+        } else if (typeof value === "string") {
             onChange?.(null)
         }
     }
@@ -111,7 +134,8 @@ export function AvatarUpload({
                     )}
                 </div>
 
-                {currentFile && (
+                {/* ✅ Show remove for both new File and existing string URL */}
+                {(currentFile || typeof value === "string") && (
                     <Button
                         type="button"
                         size="icon"
@@ -127,7 +151,11 @@ export function AvatarUpload({
 
             <div className="space-y-0.5 text-center">
                 <p className="text-sm font-medium">
-                    {currentFile ? currentFile.file.name : "Click or drag to upload"}
+                    {currentFile
+                        ? (currentFile.file instanceof File ? currentFile.file.name : currentFile.file.name)
+                        : typeof value === "string"
+                            ? "Current avatar"   // ✅ meaningful label for existing URL
+                            : "Click or drag to upload"}
                 </p>
                 <p className="text-muted-foreground text-xs">
                     PNG, JPG up to {formatBytes(maxSize)}
