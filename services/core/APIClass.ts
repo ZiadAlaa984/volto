@@ -76,6 +76,15 @@ export class APIClass<T extends Record<string, unknown>> {
     return data as T[];
   }
 
+  async deleteWhere(filters: Partial<T>): Promise<void> {
+    let query = this.supabase.from(this.table).delete();
+    Object.entries(filters).forEach(([key, value]) => {
+      query = (query as any).eq(key, value);
+    });
+    const { error } = await query;
+    if (error) throw new Error(error.message);
+  }
+
   async bulkUpdate(payload: T[]): Promise<T[]> {
     const results = await Promise.all(
       payload.map(({ id, ...rest }) =>

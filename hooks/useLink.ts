@@ -46,27 +46,14 @@ export function useLinks(cardId?: string) {
     mutateAsync: syncLinks,
   } = useMutation({
     mutationFn: catchAsync(async (submittedLinks: LinkItemFormValues[]) => {
-      const existingLinks = (linksData || []) as LinkItem[];
-
-      // 1. DELETE — in DB but removed from form
-      const submittedIds = new Set(
-        submittedLinks.map((l) => l.id).filter(Boolean)
-      );
-      const toDelete = existingLinks.filter((l) => !submittedIds.has(l.id));
-      await Promise.all(toDelete.map((l) => api.delete(l.id!)));
-
-      // 2. UPDATE — have an id
-      const toUpdate = submittedLinks
-        .filter((l) => l.id)
-        .map((l, i) => ({ ...l, order_num: i })) as LinkItem[];  // ← reflects current form order
-
-      if (toUpdate.length) await api.bulkUpdate(toUpdate);
-
-      // 3. CREATE — no id yet (new links)
-      const toCreate = submittedLinks
-        .filter((l) => !l.id)
-        .map((l, i) => ({ ...l, card_id: cardId, order_num: existingLinks.length + i }));
-      if (toCreate.length) await api.bulkCreate(toCreate);
+      const toInsert = submittedLinks.map((l, i) => ({
+        ...l,
+        card_id: cardId,
+        order_num: i,
+      }));
+      // delete first, then create
+      await api.deleteWhere({ card_id: cardId } as any);
+      await api.bulkCreate(toInsert);
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["links", cardId] });
