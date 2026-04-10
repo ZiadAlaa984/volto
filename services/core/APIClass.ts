@@ -65,14 +65,33 @@ export class APIClass<T extends Record<string, unknown>> {
     return data as T;
   }
   async bulkCreate(payload: Omit<T, "id" | "created_at">[]): Promise<T[]> {
+    const cleaned = payload.map(({ id, created_at, ...rest }: any) => rest); // ← strip at runtime
 
     const { data, error } = await this.supabase
       .from(this.table)
-      .insert(payload)
+      .insert(cleaned)
       .select();
 
     if (error) throw new Error(error.message);
     return data as T[];
+  }
+
+  async bulkUpdate(payload: T[]): Promise<T[]> {
+    const results = await Promise.all(
+      payload.map(({ id, ...rest }) =>
+        this.supabase
+          .from(this.table)
+          .update(rest)
+          .eq("id", id as string)
+          .select()
+          .single()
+          .then(({ data, error }) => {
+            if (error) throw new Error(error.message);
+            return data as T;
+          })
+      )
+    );
+    return results;
   }
 
   async create(payload: Omit<T, "id" | "created_at">): Promise<T> {

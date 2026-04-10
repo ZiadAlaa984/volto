@@ -57,11 +57,7 @@ export type PlatformKey = (typeof SOCIAL_PLATFORMS)[number]["key"];
 export const getPlatform = (key: string) =>
   SOCIAL_PLATFORMS.find((p) => p.key === key) ?? SOCIAL_PLATFORMS.at(-1)!;
 
-export const defaultLinkItem = (): LinkItemFormValues => ({
-  platform: "other",
-  title: "",
-  url: "",
-});
+
 
 export const SOCIAL_KEYS = [
   "facebook", "instagram", "twitter", "linkedin",
@@ -71,12 +67,25 @@ export const SOCIAL_KEYS = [
 // ── Schema ───────────────────────────────────────────────────────────────────
 
 export const linkItemSchema = z.object({
+  id: z.string().optional(),           // ← add
+  card_id: z.string().optional(),
+  order_num: z.number().optional(),   // ← add
   platform: z.string().min(1),
   title: z.string().max(48, "Title must be at most 48 characters"),
   url: z
     .string()
     .min(1, "URL is required")
     .url("Must be a valid URL (include https://)"),
+});
+
+// update defaultLinkItem too
+export const defaultLinkItem = (): LinkItemFormValues => ({
+  id: undefined,        // ← add
+  card_id: undefined,   // ← add
+  order_num: undefined,   // ← add
+  platform: "other",
+  title: "",
+  url: "",
 });
 
 // in linksFormSchema — already has .min(1) but add a clearer message

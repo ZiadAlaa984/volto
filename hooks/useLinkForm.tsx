@@ -12,15 +12,17 @@ import { LinkItem } from "@/types/onboarding";
 
 type UseLinkFormOptions = {
     defaultLinks?: LinkItem[];
+    values?: LinkItem[];
     onSubmit: (links: LinksFormValues["links"]) => void;
 };
 
-export function useLinkForm({ defaultLinks = [], onSubmit }: UseLinkFormOptions) {
+export function useLinkForm({ defaultLinks = [], values, onSubmit }: UseLinkFormOptions) {
     const form = useForm<LinksFormValues>({
         resolver: zodResolver(linksFormSchema),
         defaultValues: {
             links: defaultLinks.length > 0 ? defaultLinks : [defaultLinkItem()],
         },
+        values: values ? { links: values } : undefined,
         mode: "all",
     });
 

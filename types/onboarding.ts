@@ -2,10 +2,12 @@
 
 export interface LinkItem {
   title: string;
+  id?: string;
   url: string;
   platform: string;
   card_id?: string;
   order_num?: number;
+  [key: string]: unknown;
 }
 
 export interface CardType {

@@ -7,18 +7,23 @@ import GooeySvgFilter from "@/components/fancy/filter/gooey-svg-filter"
 import { CreditCard, Link, Settings } from "lucide-react"
 import SettingTab from "./TabsContent/Setting/SettingTab"
 import InfoCardTab from "./TabsContent/InfoCard/InfoCardTab"
+import LinksTab from "./TabsContent/Links/LinksTab"
+import { useCard } from "@/hooks/useCard"
 
-const TAB_CONTENT = [
-    { title: "Info Card", icon: CreditCard, content: <InfoCardTab /> },
-    { title: "Links", icon: Link, content: "Organize and access all your saved links, references, and connected resources quickly." },
-    { title: "Settings", icon: Settings, content: <SettingTab /> },
-]
+
 
 export default function GooeyDemo() {
+    const { cardData } = useCard();
     const [activeTab, setActiveTab] = useState(0)
     const screenSize = useScreenSize()
     const browserName = useDetectBrowser()
     const isSafari = browserName === "Safari"
+
+    const TAB_CONTENT = [
+        { title: "Info Card", icon: CreditCard, content: <InfoCardTab /> },
+        { title: "Links", icon: Link, content: <LinksTab cardId={cardData?.id || ""} /> },
+        { title: "Settings", icon: Settings, content: <SettingTab /> },
+    ]
 
     return (
         <div className="relative min-h-[700px] flex justify-center font-calendas md:text-base text-xs sm:text-sm">
