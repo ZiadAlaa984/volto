@@ -1,6 +1,7 @@
 // app/[slug]/not-found.tsx
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Router from "@/lib/route";
 
 export default function NotFound() {
     return (
@@ -21,7 +22,7 @@ export default function NotFound() {
                         <Link href="/">Go to Homepage</Link>
                     </Button>
                     <Button variant="outline" asChild>
-                        <Link href="/protected/onboarding">Create Your Card</Link>
+                        <Link href={Router.ONBOARDING}>Create Your Card</Link>
                     </Button>
                 </div>
             </div>

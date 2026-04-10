@@ -1,6 +1,5 @@
 "use client";
 
-import FuzzyText from "@/components/FuzzyText";
 import { Button } from "@/components/ui/button";
 
 export default function Error({
@@ -12,7 +11,8 @@ export default function Error({
 }) {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-            <FuzzyText fontSize="clamp(1rem, 2vw, 2rem)">Something went wrong!</FuzzyText>
+            <h1 className="text-4xl">Something went wrong !</h1>
+            <p className="text-lg">{error.message}</p>
             <Button onClick={() => reset()}>Try again</Button>
         </div>
     );

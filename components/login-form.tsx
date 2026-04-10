@@ -18,6 +18,7 @@ import { Separator } from "./ui/separator";
 import { useAuth } from "@/context/AuthContext";
 import BackComponent from "./shared/BackComponent";
 import { supabase } from "@/lib/supabase/client";
+import Router from "@/lib/route";
 
 export function LoginForm({
   className,
@@ -42,7 +43,7 @@ export function LoginForm({
       });
       if (error) throw error;
       // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected/onboarding");
+      router.push(Router.ONBOARDING);
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
     } finally {

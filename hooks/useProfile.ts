@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/lib/supabase/client";
 import { catchAsync, toastShared } from "@/lib/utils";
 import { createProfileApi } from "@/services/instances/profileApi";
 import { Profile } from "@/types/profile";
@@ -29,6 +28,9 @@ export function useProfile() {
         skipUserFilter: true,
       });
       return matches.length > 0;
+    },
+    onError: (error) => {
+      toastShared({ title: "Failed to check username", description: error.message });
     },
   });
 
@@ -58,8 +60,10 @@ export function useProfile() {
       return updated;
     }),
     onSuccess: () => {
-      // ✅ invalidate so profile data refreshes after update
       queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+    },
+    onError: (error) => {
+      toastShared({ title: "Failed to update profile", description: error.message });
     },
   });
 

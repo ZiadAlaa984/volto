@@ -11,7 +11,7 @@ import {
 import {
     Form, FormControl, FormField, FormItem, FormMessage,
 } from "@/components/ui/form";
-import { SOCIAL_PLATFORMS, getPlatform, LinksFormValues, resolveTitle } from "@/lib/social-platforms";
+import { SOCIAL_PLATFORMS, getPlatform, LinksFormValues } from "@/lib/social-platforms";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import { fadeInUp } from "@/lib/Animation/stepVariants";
 

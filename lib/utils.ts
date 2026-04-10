@@ -77,3 +77,32 @@ export function catchAsync<T extends unknown[], R>(
   };
 }
 
+
+
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+export function getErrorMessage(error: Error): string {
+  return error.message.includes("cards_user_id_key")
+    ? "You already have a card"
+    : "Failed to create card";
+}
+
+export function errorToast(error: Error) {
+  toastShared({
+    title: "Something went wrong",
+    description: getErrorMessage(error),
+    variant: "error",
+  });
+}
+
+
+export const SLUG_REGEX = /[^a-z0-9-]/g;
+
+export function sanitizeSlug(value: string) {
+  return value.toLowerCase().replace(/\s+/g, "-").replace(SLUG_REGEX, "");
+}
+
+// export function getOrigin() {
+//   return typeof window !== "undefined" ? window.location.origin : "";
+// }

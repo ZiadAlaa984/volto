@@ -4,31 +4,30 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+  Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
 } from "@/components/ui/form";
 import { StepProps } from "@/types/onboarding";
 import CardFooterSteps from "../CardFooterSteps";
-import { catchAsync, toastShared } from "@/lib/utils";
+import { catchAsync, toastShared, sanitizeSlug } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
 import { fadeInUp } from "@/lib/Animation/stepVariants";
 import { UserNameFormValues, userNameSchema } from "@/lib/Schema/userNameSchema";
+import { useEffect, useState } from "react";
 
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function SlugStep({ formData, onNext, onBack }: StepProps) {
   const { checkUsername, isPending } = useProfile();
+  const [origin, setOrigin] = useState("");
+  // ✅ in SlugStep.tsx
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
   const form = useForm<UserNameFormValues>({
     resolver: zodResolver(userNameSchema),
     defaultValues: { user_name: formData.user_name ?? "" },
@@ -39,25 +38,27 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
   const isValid = form.formState.isValid;
 
   const handleNext = form.handleSubmit(
-    catchAsync(async (values) => {
-      const exists = await checkUsername(values.user_name);
-      // check if username exists
+    catchAsync(async ({ user_name }) => {
+      const exists = await checkUsername(user_name);
+
       if (exists) {
         toastShared({
           title: "Username unavailable",
-          description: "The selected username is already registered. Please select a different username.",
+          description: "That username is already taken. Please choose a different one.",
           variant: "warning",
         });
         return;
       }
-      // username is available
+
       toastShared({
         title: "Great choice! 🎉",
-        description: "This username is available. Go ahead and claim it!",
+        description: "This username is available — go ahead and claim it!",
       });
-      onNext({ user_name: values.user_name });
+
+      onNext({ user_name });
     }),
   );
+
   return (
     <Card className="rounded-3xl shadow-md border w-full">
       <CardHeader>
@@ -67,9 +68,11 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
         </CardDescription>
       </CardHeader>
 
-      <CardContent >
+      <CardContent>
         <Form {...form}>
           <form onSubmit={handleNext} className="space-y-4">
+
+            {/* Username input */}
             <motion.div {...fadeInUp(0)} className="space-y-2">
               <FormField
                 control={form.control}
@@ -79,20 +82,13 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
                     <FormLabel>Username</FormLabel>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm shrink-0">
-                        {typeof window !== "undefined" ? window.location.origin : ""}/
+                        {origin}/
                       </span>
                       <FormControl>
                         <Input
                           placeholder="ziad-alaa"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value
-                                .toLowerCase()
-                                .replace(/\s+/g, "-")
-                                .replace(/[^a-z0-9-]/g, ""),
-                            )
-                          }
+                          onChange={(e) => field.onChange(sanitizeSlug(e.target.value))}
                         />
                       </FormControl>
                     </div>
@@ -102,6 +98,7 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
               />
             </motion.div>
 
+            {/* URL preview */}
             <motion.div
               {...fadeInUp(0.08)}
               className="rounded-xl bg-muted/50 border border-dashed px-4 py-3"
@@ -116,24 +113,25 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
                 transition={{ duration: 0.25 }}
                 className="text-sm text-muted-foreground italic"
               >
-                {!slug?.trim() ? (
-                  "Your public profile URL hasn't been set yet."
-                ) : (
+                {slug?.trim() ? (
                   <>
                     Your profile will be at{" "}
                     <span className="font-semibold text-foreground not-italic">
                       /{slug}
                     </span>
                   </>
+                ) : (
+                  "Your public profile URL hasn't been set yet."
                 )}
               </motion.p>
             </motion.div>
+
           </form>
         </Form>
       </CardContent>
 
       <CardFooterSteps
-        isFirstStep={true}
+        isFirstStep
         onNext={handleNext}
         onBack={onBack}
         isValid={isValid && !isPending}

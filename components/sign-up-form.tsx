@@ -18,6 +18,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Separator } from "./ui/separator";
 import BackComponent from "./shared/BackComponent";
 import { supabase } from "@/lib/supabase/client";
+import Router from "@/lib/route";
 
 export function SignUpForm({
   className,
@@ -46,7 +47,7 @@ export function SignUpForm({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/protected`,
+          emailRedirectTo: `${window.location.origin}${Router.DASHBOARD}`,
         },
       });
       if (error) throw error;

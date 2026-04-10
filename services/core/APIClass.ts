@@ -59,7 +59,7 @@ export class APIClass<T extends Record<string, unknown>> {
       .from(this.table)
       .select("*")
       .eq(column as string, id)
-      .single();
+      .maybeSingle(); // ← returns null instead of throwing when 0 rows
 
     if (error) throw new Error(error.message);
     return data as T;

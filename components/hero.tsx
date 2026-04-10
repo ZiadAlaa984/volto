@@ -8,7 +8,9 @@ import ButtonDemo from "./shared/ButtonDemo";
 import Link from "next/link";
 import { useCard } from "@/hooks/useCard";
 import { Skeleton } from "./ui/skeleton";
-
+import BlurText from "./BlurText";
+import { garamond } from "@/lib/fonts";
+import Router from "@/lib/route";
 // Shared fade-up variant factory
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -24,7 +26,7 @@ export default function Hero() {
     <Card className="relative w-full py-6 min-h-[700px]   overflow-hidden flex flex-col ">
       <CardContent >
 
-        <div className="relative z-10  flex flex-col gap-6 justify-center items-center ">
+        <div className="relative z-10   flex flex-col gap-6 justify-center items-center ">
           {/* Badge */}
           <motion.div
             {...fadeUp(0)}
@@ -32,20 +34,21 @@ export default function Hero() {
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="relative  inline-flex h-2 w-2 rounded-full bg-emerald-500" />
             </span>
             The link-in-bio tool for creators
           </motion.div>
 
           {/* Headline — uses Outfit via --font-sans */}
-          <motion.h2
-            {...fadeUp(0.1)}
-            className=" capitalize leading-[1.06] text-center tracking-[-0.04em] mb-5 text-7xl"
-          >
-            Volto — One link.<br />
-            Everything you are.
-          </motion.h2>
-
+          <h2>
+            <BlurText
+              text={`Volto — One link Everything you are`}
+              delay={200}
+              animateBy="words"
+              direction="top"
+              className={` capitalize flex ${garamond.className}  justify-center items-center leading-[1.06] text-center tracking-[-0.04em] mb-5 text-6xl md:text-8xl `}
+            />
+          </h2>
           {/* Subtext */}
           <motion.p
             {...fadeUp(0.2)}
@@ -60,7 +63,7 @@ export default function Hero() {
             {...fadeUp(0.3)}
             className="flex items-center gap-3 flex-wrap justify-center"
           >
-            <Link href={hasCard ? "/protected/dashboard" : "/protected/onboarding"}>
+            <Link href={hasCard ? Router.DASHBOARD : Router.ONBOARDING}>
               <ButtonDemo>
                 {isLoadingCard ? <Skeleton className="h-6 w-28" /> :
                   hasCard ? "Go to Dashboard" : "Get Started Free"}

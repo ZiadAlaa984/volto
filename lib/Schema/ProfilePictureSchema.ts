@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const ProfilePictureSchema = z.object({
     profile_picture: z
-        .instanceof(File)
+        .union([z.instanceof(File), z.string()])
         .nullable()
         .optional(),
 });

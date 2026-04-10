@@ -14,6 +14,7 @@ import { Loader } from "lucide-react";
 import { toastShared } from "@/lib/utils";
 import Loading from "@/app/loading";
 import { useRouter } from "next/navigation";
+import Router from "@/lib/route";
 
 function InfoCardTab() {
     const { cardData, isLoadingCard, updateCard, isUpdating } = useCard();
@@ -65,7 +66,7 @@ function InfoCardTab() {
     if (!cardData) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Button onClick={() => router.push("/protected/onboarding")}>
+                <Button onClick={() => router.push(Router.ONBOARDING)}>
                     Create Card
                 </Button>
             </div>

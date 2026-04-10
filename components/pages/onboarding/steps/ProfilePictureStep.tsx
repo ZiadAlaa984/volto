@@ -15,7 +15,9 @@ export function ProfilePictureStep({ formData, onNext, onBack }: StepProps) {
     const form = useForm<ProfilePictureSchema>({
         resolver: zodResolver(ProfilePictureSchema),
         defaultValues: {
-            profile_picture: typeof formData.profile_picture === "string" ? null : formData.profile_picture,
+            profile_picture: formData?.profile_picture instanceof File || typeof formData?.profile_picture === "string"
+                ? formData.profile_picture
+                : null,
         },
         mode: "onChange",
     });

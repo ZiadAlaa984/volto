@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useCallback, useRef } from "react"
+import { useMemo, useCallback, useRef, useEffect } from "react"
 import {
     formatBytes,
     useFileUpload,
@@ -29,7 +29,6 @@ export function AvatarUpload({
 }: AvatarUploadProps) {
 
     const initialFiles = useMemo<FileMetadata[]>(() => {
-        if (!value) return []
         if (value instanceof File) {
             return [{
                 id: "initial-avatar",
@@ -39,15 +38,9 @@ export function AvatarUpload({
                 url: URL.createObjectURL(value),
             }]
         }
-        // String URL — no initial files needed, handled via previewUrl
         return []
-    }, []) // empty deps — seed once on mount only
+    }, []) // intentionally empty — seed on mount only
 
-    // ── FIX: guard against onFilesChange firing during initial seed ──────────
-    // useFileUpload calls onFilesChange synchronously when processing initialFiles,
-    // which triggers onChange → Controller setState → warning during render.
-    // We skip the first call entirely since it's just the internal seed, not a
-    // real user interaction.
     const isInitialMount = useRef(true)
 
     const handleFilesChange = useCallback((files: FileWithPreview[]) => {
@@ -69,6 +62,7 @@ export function AvatarUpload({
             handleDrop,
             openFileDialog,
             getInputProps,
+            clearFiles,
         },
     ] = useFileUpload({
         maxFiles: 1,
@@ -79,9 +73,19 @@ export function AvatarUpload({
         onFilesChange: handleFilesChange,
     })
 
+    // ── Sync internal state when value is cleared externally ─────────────────
+    // When the user deletes and navigates away, formData resets profile_picture
+    // to null. On return, value=null but internal files[] still holds the old
+    // file. This effect clears internal state to match.
+    useEffect(() => {
+        if (value == null && files.length > 0) {
+            isInitialMount.current = true // suppress the onChange that clearFiles triggers
+            clearFiles()
+        }
+    }, [value])
+
     const currentFile = files[0]
 
-    // String value = existing stored URL, File = new upload preview, fallback = defaultAvatar
     const previewUrl = typeof value === "string"
         ? value
         : currentFile?.preview || defaultAvatar
@@ -90,11 +94,17 @@ export function AvatarUpload({
         e.stopPropagation()
         if (currentFile) {
             removeFile(currentFile.id)
-            onChange?.(null)
-        } else if (typeof value === "string") {
-            onChange?.(null)
         }
+        onChange?.(null)
     }
+
+    const fileName = currentFile
+        ? currentFile.file instanceof File
+            ? currentFile.file.name
+            : currentFile.file.name
+        : typeof value === "string"
+            ? "Current avatar"
+            : "Click or drag to upload"
 
     return (
         <div className={cn("flex flex-col items-center gap-4", className)}>
@@ -117,11 +127,7 @@ export function AvatarUpload({
 
                     {previewUrl ? (
                         <>
-                            <img
-                                src={previewUrl}
-                                alt="Avatar"
-                                className="h-full w-full object-cover"
-                            />
+                            <img src={previewUrl} alt="Avatar" className="h-full w-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 <CameraIcon className="text-white size-6" />
                             </div>
@@ -134,7 +140,6 @@ export function AvatarUpload({
                     )}
                 </div>
 
-                {/* ✅ Show remove for both new File and existing string URL */}
                 {(currentFile || typeof value === "string") && (
                     <Button
                         type="button"
@@ -150,13 +155,7 @@ export function AvatarUpload({
             </div>
 
             <div className="space-y-0.5 text-center">
-                <p className="text-sm font-medium">
-                    {currentFile
-                        ? (currentFile.file instanceof File ? currentFile.file.name : currentFile.file.name)
-                        : typeof value === "string"
-                            ? "Current avatar"   // ✅ meaningful label for existing URL
-                            : "Click or drag to upload"}
-                </p>
+                <p className="text-sm font-medium">{fileName}</p>
                 <p className="text-muted-foreground text-xs">
                     PNG, JPG up to {formatBytes(maxSize)}
                 </p>

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import Router from "@/lib/route";
 
-async function UserDetails() {
+export default async function ProtectedPage() {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
 
@@ -10,15 +10,5 @@ async function UserDetails() {
     redirect("/auth/login");
   }
 
-  return JSON.stringify(data.claims, null, 2);
-}
-
-export default function ProtectedPage() {
-  return (
-    <div className="mx-auto">
-      <Link href="/protected/onboarding" className="text-blue-600">
-        onboarding
-      </Link>
-    </div>
-  );
+  redirect(Router.ONBOARDING);
 }

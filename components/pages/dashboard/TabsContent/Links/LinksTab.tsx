@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle, CardDescription, CardContent, CardHeader, CardFooter } from "@/components/ui/card";
 import { useLinks } from "@/hooks/useLink";
 import { useLinkForm } from "@/hooks/useLinkForm";
+import Router from "@/lib/route";
 import { useRouter } from "next/navigation";
 
 export default function LinksTab({ cardId }: { cardId: string }) {
@@ -38,7 +39,7 @@ export default function LinksTab({ cardId }: { cardId: string }) {
     if (!linksData) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Button onClick={() => router.push("/protected/onboarding")}>
+                <Button onClick={() => router.push(Router.ONBOARDING)}>
                     Create Card
                 </Button>
             </div>

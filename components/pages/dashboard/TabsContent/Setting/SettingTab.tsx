@@ -18,6 +18,7 @@ import { useAccount } from "@/hooks/useAccount";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import Router from "@/lib/route";
 
 type CardItem = {
     title: string;
@@ -75,7 +76,7 @@ function SettingTab() {
             title: "Create Card",
             description: "Create your card",
             Action: (
-                <Button onClick={() => router.push("/protected/onboarding")}>
+                <Button onClick={() => router.push(Router.ONBOARDING)}>
                     Create Card
                 </Button>
             ),
