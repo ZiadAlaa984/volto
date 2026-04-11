@@ -11,6 +11,7 @@ import { Skeleton } from "./ui/skeleton";
 import BlurText from "./BlurText";
 import { garamond } from "@/lib/fonts";
 import Router from "@/lib/route";
+import { useAuth } from "@/context/AuthContext";
 // Shared fade-up variant factory
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 28 },
@@ -20,7 +21,9 @@ const fadeUp = (delay = 0) => ({
 
 export default function Hero() {
   const { hasCard, isLoadingCard } = useCard();
+  const { isLoading: isLoadingAuth } = useAuth();
 
+  const isLoading = isLoadingAuth || isLoadingCard;
 
   return (
     <Card className="relative w-full py-6 min-h-[700px]   overflow-hidden flex flex-col ">
@@ -65,7 +68,7 @@ export default function Hero() {
           >
             <Link href={hasCard ? Router.DASHBOARD : Router.ONBOARDING}>
               <ButtonDemo>
-                {isLoadingCard ? <Skeleton className="h-6 w-28" /> :
+                {isLoading ? <Skeleton className="h-6 w-28" /> :
                   hasCard ? "Go to Dashboard" : "Get Started Free"}
               </ButtonDemo>
             </Link>

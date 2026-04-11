@@ -36,13 +36,13 @@ function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }:
 
     const cards = useMemo<CardItem[]>(() => [
         {
-            title: "Profile",
-            description: "Update your profile information",
+            title: "Account",
+            description: "Manage your account",
             content: (
                 <div>
                     {session === undefined ? <Skeleton className="h-4 w-20" /> : <p>Email: {session?.user?.email}</p>}
                     {isLoadingCard ? <Skeleton className="h-4 w-20" /> : hasCard && <p>
-                        Username:{" "}
+                        Profile URL{" "}:{" "}
                         <Link
                             target="_blank"
                             className="underline font-light italic"
@@ -125,8 +125,8 @@ function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }:
                 <Card key={index}>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
-                            <CardTitle>{card.title}</CardTitle>
-                            <CardDescription>{card.description}</CardDescription>
+                            {card.title && <CardTitle>{card.title}</CardTitle>}
+                            {card.description && <CardDescription>{card.description}</CardDescription>}
                         </div>
                         {card.Action && card.Action}
                     </CardHeader>
