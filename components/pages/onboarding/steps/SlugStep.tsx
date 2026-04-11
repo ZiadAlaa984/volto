@@ -80,7 +80,7 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Username</FormLabel>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center md:flex-nowrap flex-wrap gap-2">
                       <span className="text-muted-foreground text-sm shrink-0">
                         {origin}/
                       </span>

@@ -1,15 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "./logout-button";
 import Router from "@/lib/route";
+import { useAuth } from "@/context/AuthContext";
 
-export async function AuthButton() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+export function AuthButton() {
+  const { isAuthenticated, isLoading } = useAuth();
 
-  if (user) {
+  if (isLoading) {
+    return <div className="h-9 w-40 rounded-md bg-muted animate-pulse" />; // skeleton
+  }
+
+  if (isAuthenticated) {
     return (
       <div className="flex items-center gap-4">
         <Button asChild variant="outline">
