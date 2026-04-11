@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import Router from "@/lib/route";
+import { CardType } from "@/types/onboarding";
 
 type CardItem = {
     title: string;
@@ -27,12 +28,11 @@ type CardItem = {
     content?: React.ReactNode;
 };
 
-function SettingTab() {
+function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }: { hasCard: boolean; isLoadingCard: boolean; cardData: CardType; deleteCard: (card: any) => void; isPending: boolean }) {
     const { profileData, isLoading: isLoadingProfile } = useProfile();
-    const { deleteAccount, isDeletingAccount } = useAccount();
     const { session } = useAuth();
-    const { deleteCard, isPending, hasCard, cardData, isLoadingCard } = useCard();
     const router = useRouter();
+    const { deleteAccount, isDeletingAccount } = useAccount();
 
     const cards = useMemo<CardItem[]>(() => [
         {
@@ -65,7 +65,7 @@ function SettingTab() {
             description: "Delete your card",
             Action: (
                 <AlertDialogShared
-                    onClick={() => deleteCard(cardData.id!)}
+                    onClick={() => deleteCard(cardData)}
                     disabled={isPending}
                     title="Delete Card"
                     description="Are you sure you want to delete your card?"
@@ -98,11 +98,22 @@ function SettingTab() {
 
     if (isLoadingProfile || isLoadingCard) {
         return (
-            <div className="flex flex-col space-y-3">
-                <Skeleton className="h-[125px] w-full rounded-xl" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-full" />
+            <div className="w-full space-y-6">
+                <div className="grow space-y-2">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-1/2" />
+                </div>
+                <div className="grow space-y-2">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-1/3" />
+                </div>
+                <div className="grow space-y-2">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-2/3" />
+                </div>
+                <div className="grow space-y-2">
+                    <Skeleton className="h-3 w-full" />
+                    <Skeleton className="h-3 w-1/2" />
                 </div>
             </div>
         );

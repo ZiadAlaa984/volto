@@ -6,10 +6,10 @@ import { useLinks } from "@/hooks/useLink";
 import { useLinkForm } from "@/hooks/useLinkForm";
 import Router from "@/lib/route";
 import { useRouter } from "next/navigation";
-
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 export default function LinksTab({ cardId }: { cardId: string }) {
 
-    const { linksData, syncLinks, isPending } = useLinks(cardId);
+    const { linksData, syncLinks, isPending, isLoading } = useLinks(cardId);
     const router = useRouter();
     const {
         form,
@@ -25,13 +25,12 @@ export default function LinksTab({ cardId }: { cardId: string }) {
         defaultLinks: linksData || [],
         values: linksData || [],
         onSubmit: (links) => {
-            console.log("🚀 ~ LinksTab ~ links:", links)
             syncLinks(links);
         },
     });
 
 
-    if (linksData === undefined) {
+    if (linksData === undefined || isLoading) {
         return <Loading />;
     }
 
@@ -53,16 +52,19 @@ export default function LinksTab({ cardId }: { cardId: string }) {
                 <CardDescription>Add the links you want to share on your profile.</CardDescription>
             </CardHeader>
             <CardContent>
-                <LinksForm
-                    form={form}
-                    fields={fields}
-                    watchedLinks={watchedLinks}
-                    errors={errors}
-                    onPlatformChange={handlePlatformChange}
-                    onAddLink={handleAddLink}
-                    onRemove={remove}
-                    onSubmit={handleSubmit}
-                />
+                <ScrollArea className="h-[400px] w-full">
+                    <LinksForm
+                        form={form}
+                        fields={fields}
+                        watchedLinks={watchedLinks}
+                        errors={errors}
+                        onPlatformChange={handlePlatformChange}
+                        onAddLink={handleAddLink}
+                        onRemove={remove}
+                        onSubmit={handleSubmit}
+                    />
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
             </CardContent>
             <CardFooter>
                 <Button onClick={handleSubmit} disabled={!isValid || isPending || !form.formState.isDirty}>

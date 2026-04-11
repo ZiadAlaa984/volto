@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CardType } from "@/types/onboarding";
 import { useCard } from "@/hooks/useCard";
@@ -23,7 +23,7 @@ export default function OnboardingPage() {
   const isLastStep = currentStep === STEPS.length - 1;
   const progress = (currentStep / (STEPS.length - 1)) * 100;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isLoadingCard && hasCard) {
       router.push(Router.DASHBOARD); // was pushing to ONBOARDING — likely a bug
     }

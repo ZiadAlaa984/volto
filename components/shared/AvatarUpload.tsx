@@ -43,14 +43,24 @@ export function AvatarUpload({
 
     const isInitialMount = useRef(true)
 
+    const pendingChange = useRef<File | string | null | undefined>(undefined)
+
     const handleFilesChange = useCallback((files: FileWithPreview[]) => {
         if (isInitialMount.current) {
             isInitialMount.current = false
             return
         }
         const raw = files[0]?.file
-        onChange?.(raw instanceof File ? raw : value ?? null)
-    }, [onChange, value])
+        pendingChange.current = raw instanceof File ? raw : value ?? null
+    }, [value])
+
+    // Flush the pending change after render
+    useEffect(() => {
+        if (pendingChange.current !== undefined) {
+            onChange?.(pendingChange.current)
+            pendingChange.current = undefined
+        }
+    })
 
     const [
         { files, isDragging, errors },

@@ -6,12 +6,12 @@ import { UseFormReturn, UseFieldArrayReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+    Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
     Form, FormControl, FormField, FormItem, FormMessage,
 } from "@/components/ui/form";
-import { SOCIAL_PLATFORMS, getPlatform, LinksFormValues } from "@/lib/social-platforms";
+import { SOCIAL_PLATFORMS, getPlatform, LinksFormValues, SOCIAL_PLATFORMS_GROUPED } from "@/lib/social-platforms";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import { fadeInUp } from "@/lib/Animation/stepVariants";
 
@@ -67,13 +67,18 @@ export function LinksForm({
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent>
-                                                            {SOCIAL_PLATFORMS.map((p) => (
-                                                                <SelectItem key={p.key} value={p.key}>
-                                                                    <span className="flex items-center gap-2">
-                                                                        <PlatformIcon name={p.icon} className="h-4 w-4 shrink-0" />
-                                                                        {p.label}
-                                                                    </span>
-                                                                </SelectItem>
+                                                            {SOCIAL_PLATFORMS_GROUPED.map((group) => (
+                                                                <SelectGroup key={group.group}>
+                                                                    <SelectLabel>{group.group}</SelectLabel>
+                                                                    {group.platforms.map((p) => (
+                                                                        <SelectItem key={p.key} value={p.key}>
+                                                                            <span className="flex items-center gap-2">
+                                                                                <PlatformIcon name={p.icon} className="h-4 w-4 shrink-0" />
+                                                                                {p.label}
+                                                                            </span>
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectGroup>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>

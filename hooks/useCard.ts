@@ -127,9 +127,15 @@ export function useCard() {
   // ─── Delete ───────────────────────────────────────────────────────────────
 
   const { isPending: isDeleting, mutateAsync: deleteCard } = useMutation({
-    mutationFn: async (cardId: string) => {
-      if (!cardId) return;
-      await api.delete(cardId);
+    mutationFn: async (cardData: CardType) => {
+      if (!cardData?.id) return;
+
+      // Delete profile picture from storage first
+      if (cardData?.profile_picture) {
+        await deleteFile(cardData.profile_picture as string);
+      }
+
+      await api.delete(cardData.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["card", userId] });

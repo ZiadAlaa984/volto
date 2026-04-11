@@ -121,9 +121,53 @@
     @apply bg-background text-foreground;
   }
 
+  html {
+    scroll-behavior: smooth !important;
+  }
+
+
   /* globals.css */
 
   [data-sileo-description] {
     color: #ffffff !important;
+  }
+
+  body {
+    --sb-track-color: transparent;
+    --sb-thumb-color: rgba(255, 255, 255, 0.4);
+    --sb-thumb-hover: rgba(255, 255, 255, 0.7);
+    --sb-size: 10px;
+  }
+
+  /* width */
+  body::-webkit-scrollbar {
+    width: var(--sb-size);
+  }
+
+  /* track */
+  body::-webkit-scrollbar-track {
+    background: var(--sb-track-color);
+  }
+
+  /* thumb */
+  body::-webkit-scrollbar-thumb {
+    background: var(--sb-thumb-color);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: 0.3s;
+  }
+
+  /* hover effect */
+  body::-webkit-scrollbar-thumb:hover {
+    background: var(--sb-thumb-hover);
+  }
+
+  /* Firefox */
+  @supports not selector(::-webkit-scrollbar) {
+    body {
+      scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+    }
   }
 }

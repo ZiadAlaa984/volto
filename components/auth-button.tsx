@@ -13,7 +13,7 @@ export async function AuthButton() {
     return (
       <div className="flex items-center gap-4">
         <Button asChild variant="outline">
-          <Link href={Router.ONBOARDING}>Dashboard</Link>
+          <Link href={Router.DASHBOARD}>Dashboard</Link>
         </Button>
         <LogoutButton />
       </div>

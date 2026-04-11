@@ -19,10 +19,10 @@ export default function ProfileHeader({ CardData }: { CardData: CardType }) {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             >
-                <Avatar className="w-[120px] h-[120px] shadow-xl">
+                <Avatar className="size-28 shadow-xl">
                     <AvatarImage
                         src={(CardData?.profile_picture as string) || ""}
-                        className="object-contain"
+                        className="object-cover"
                         alt={CardData?.name}
                     />
                     <AvatarFallback className="text-2xl font-bold">

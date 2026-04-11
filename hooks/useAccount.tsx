@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase/client";
-import { toastShared } from "@/lib/utils";
+import { catchAsync, toastShared } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
@@ -12,7 +12,7 @@ export function useAccount() {
     const router = useRouter();
 
     const { mutateAsync: deleteAccount, isPending: isDeletingAccount } = useMutation({
-        mutationFn: async () => {
+        mutationFn: catchAsync(async () => {
             if (!userId) throw new Error("No user session");
 
             const { error } = await supabase
@@ -23,7 +23,7 @@ export function useAccount() {
             if (error) throw error;
 
             await signOut();
-        },
+        }),
         onSuccess: () => {
             toastShared({ title: "Account deleted successfully" });
             router.replace("/auth/account-deleted");

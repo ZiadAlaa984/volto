@@ -15,9 +15,9 @@ import { toastShared } from "@/lib/utils";
 import Loading from "@/app/loading";
 import { useRouter } from "next/navigation";
 import Router from "@/lib/route";
+import { CardType } from "@/types/onboarding";
 
-function InfoCardTab() {
-    const { cardData, isLoadingCard, updateCard, isUpdating } = useCard();
+function InfoCardTab({ cardData, isUpdating, updateCard, isLoadingCard }: { cardData: CardType, isUpdating: boolean, updateCard: (data: { cardId: string; data: CardInfoFormValues; currentProfilePicture?: string | null }) => void, isLoadingCard: boolean }) {
     const router = useRouter();
 
     const form = useForm<CardInfoFormValues>({
