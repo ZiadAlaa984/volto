@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next"
 import { fontSans, fontMono } from "@/lib/fonts";
 import { ToasterClient } from "@/components/ToasterClient";
 import { AuthProvider } from "@/context/AuthContext";
@@ -37,6 +38,7 @@ export default function RootLayout({
               <QueryProvider>
                 <ToasterClient />
                 {children}
+                <Analytics />
               </QueryProvider>
             </AuthProvider>
           </Suspense>
