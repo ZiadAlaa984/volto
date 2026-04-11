@@ -12,12 +12,8 @@ import BlurText from "./BlurText";
 import { garamond } from "@/lib/fonts";
 import Router from "@/lib/route";
 import { useAuth } from "@/context/AuthContext";
-// Shared fade-up variant factory
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 28 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as unknown as Easing[], delay },
-});
+import { fadeUp } from "@/lib/animations";
+
 
 export default function Hero() {
   const { hasCard, isLoadingCard } = useCard();
@@ -66,7 +62,7 @@ export default function Hero() {
             {...fadeUp(0.3)}
             className="flex items-center gap-3 flex-wrap justify-center"
           >
-            <Link href={hasCard ? Router.DASHBOARD : Router.ONBOARDING}>
+            <Link href={hasCard ? Router.DASHBOARD.home : Router.ONBOARDING}>
               <ButtonDemo>
                 {isLoading ? <Skeleton className="h-6 w-28" /> :
                   hasCard ? "Go to Dashboard" : "Get Started Free"}

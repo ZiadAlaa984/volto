@@ -5,18 +5,12 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import useDetectBrowser from "@/hooks/use-detect-browser"
 import useScreenSize from "@/hooks/use-screen-size"
 import GooeySvgFilter from "@/components/fancy/filter/gooey-svg-filter"
-import { CreditCard, Link, Settings } from "lucide-react"
-import SettingTab from "./TabsContent/Setting/SettingTab"
-import InfoCardTab from "./TabsContent/InfoCard/InfoCardTab"
-import LinksTab from "./TabsContent/Links/LinksTab"
-import { useCard } from "@/hooks/useCard"
-import { CardType } from "@/types/onboarding"
+import { BriefcaseBusiness, MessageCircle, Palette } from "lucide-react"
+import InfoBusinessTab from "./TabContent/InfoBusinessTab/InfoBusinessTab"
+import ReviewsTab from "./TabContent/ReviewsTab/ReviewsTab"
 
-const TAB_SLUGS = ["info-card", "links", "settings"] as const
-type TabSlug = typeof TAB_SLUGS[number]
 
-export default function GooeyDemo() {
-    const { deleteCard, isPending, hasCard, cardData, isLoadingCard, updateCard } = useCard();
+export default function MainContent() {
 
     const router = useRouter()
     const pathname = usePathname()
@@ -25,12 +19,11 @@ export default function GooeyDemo() {
     const browserName = useDetectBrowser()
     const isSafari = browserName === "Safari"
 
-    const TAB_CONTENT = useMemo(() => [
-        { slug: "info-card", title: "Info Card", icon: CreditCard, content: <InfoCardTab cardData={cardData as CardType} isLoadingCard={isLoadingCard} isUpdating={isPending} updateCard={updateCard} /> },
-        ...(cardData ? [{ slug: "links", title: "Links", icon: Link, content: <LinksTab cardId={cardData?.id || ""} /> }] : []),
-        { slug: "settings", title: "Settings", icon: Settings, content: <SettingTab hasCard={hasCard} isLoadingCard={isLoadingCard} cardData={cardData as CardType} deleteCard={deleteCard} isPending={isPending} /> },
-    ], [cardData, hasCard, isLoadingCard, deleteCard, isPending, updateCard])
-
+    const TAB_CONTENT = [
+        { slug: "info-card", title: "Info Business", icon: BriefcaseBusiness, content: <InfoBusinessTab /> },
+        { slug: "links", title: "Reviews", icon: MessageCircle, content: <ReviewsTab /> },
+        // { slug: "settings", title: "Theme", icon: Palette, content: <ThemeTab /> },
+    ]
 
     const tabSlug = searchParams.get("tab")
     const resolvedTab = Math.max(0, TAB_CONTENT.findIndex(t => t.slug === tabSlug))

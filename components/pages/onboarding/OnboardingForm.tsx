@@ -25,7 +25,7 @@ export default function OnboardingPage() {
 
   useLayoutEffect(() => {
     if (!isLoadingCard && hasCard) {
-      router.push(Router.DASHBOARD); // was pushing to ONBOARDING — likely a bug
+      router.push(Router.DASHBOARD.home); // was pushing to ONBOARDING — likely a bug
     }
   }, [hasCard, isLoadingCard, router]);
 

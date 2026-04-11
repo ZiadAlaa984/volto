@@ -17,7 +17,7 @@ export function AuthButton() {
     return (
       <div className="flex items-center gap-4">
         <Button asChild variant="outline">
-          <Link href={Router.DASHBOARD}>Dashboard</Link>
+          <Link href={Router.DASHBOARD.home}>Dashboard</Link>
         </Button>
         <LogoutButton />
       </div>
