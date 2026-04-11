@@ -8,7 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Suspense } from "react";
 import QueryProvider from "@/providers/QueryProvider";
 import Loading from "./loading";
-
+import { SpeedInsights } from "@vercel/speed-insights/next"
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
@@ -38,6 +38,7 @@ export default function RootLayout({
               <QueryProvider>
                 <ToasterClient />
                 {children}
+                <SpeedInsights />
                 <Analytics />
               </QueryProvider>
             </AuthProvider>
