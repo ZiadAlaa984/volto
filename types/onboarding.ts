@@ -18,6 +18,7 @@ export interface CardType {
   links: LinkItem[];
   user_id?: string
   id?: string
+  card_type: 'business' | 'personal';
 }
 
 

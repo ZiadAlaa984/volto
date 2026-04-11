@@ -5,4 +5,5 @@ export interface Card {
   bio: string;
   created_at: string;
   profile_picture: string;
+  card_type: 'business' | 'personal';
 }

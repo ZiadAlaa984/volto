@@ -14,6 +14,7 @@ export const STEPS = [
 ] as const;
 
 export const INITIAL_FORM_DATA: CardType = {
+    card_type: "personal",
     user_name: "",
     profile_picture: null,
     name: "",
