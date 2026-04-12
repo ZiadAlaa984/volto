@@ -1,0 +1,131 @@
+"use client"
+import { useState } from 'react'
+import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { OpeningHours, DayHours } from '@/types/business'
+
+const DAYS: DayHours['day'][] = [
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+]
+
+const DEFAULT_HOURS: OpeningHours = [
+    { day: 'Monday', closed: false, open: '09:00', close: '18:00' },
+    { day: 'Tuesday', closed: false, open: '09:00', close: '18:00' },
+    { day: 'Wednesday', closed: false, open: '09:00', close: '18:00' },
+    { day: 'Thursday', closed: false, open: '09:00', close: '18:00' },
+    { day: 'Friday', closed: false, open: '09:00', close: '17:00' },
+    { day: 'Saturday', closed: true },
+    { day: 'Sunday', closed: true },
+]
+
+function parseMinutes(time: string): number {
+    const [h, m] = time.split(':').map(Number)
+    return h * 60 + m
+}
+
+function formatTime(time: string): string {
+    const [h, m] = time.split(':').map(Number)
+    const period = h >= 12 ? 'PM' : 'AM'
+    const hour = h % 12 === 0 ? 12 : h % 12
+    return `${hour}:${m.toString().padStart(2, '0')} ${period}`
+}
+
+function getStatus(hours: OpeningHours): { isOpen: boolean; sublabel: string } {
+    const now = new Date()
+    const currentDay = DAYS[now.getDay() === 0 ? 6 : now.getDay() - 1]
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    const today = hours.find(d => d.day === currentDay)
+
+    if (!today || today.closed || !today.open || !today.close) {
+        return { isOpen: false, sublabel: 'Closed today' }
+    }
+
+    const openMin = parseMinutes(today.open)
+    const closeMin = parseMinutes(today.close)
+
+    if (currentMinutes >= openMin && currentMinutes < closeMin) {
+        return { isOpen: true, sublabel: `Closes ${today.close}` }
+    }
+
+    return { isOpen: false, sublabel: `Opens ${today.open}` }
+}
+
+interface OpenHoursEditorProps {
+    initialHours?: OpeningHours
+    onChange?: (hours: OpeningHours) => void
+}
+
+function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEditorProps) {
+    const [hours, setHours] = useState<OpeningHours>(
+        DAYS.map(day => initialHours.find(d => d.day === day) ?? { day, closed: true })
+    )
+
+    const status = getStatus(hours)
+
+    function update(day: DayHours['day'], patch: Partial<DayHours>) {
+        const next = hours.map(d => d.day === day ? { ...d, ...patch } : d)
+        setHours(next)
+        onChange?.(next)
+    }
+
+    function toggleDay(day: DayHours['day'], checked: boolean) {
+        if (checked) {
+            update(day, { closed: false, open: '09:00', close: '18:00' })
+        } else {
+            update(day, { closed: true, open: undefined, close: undefined })
+        }
+    }
+
+    return (
+        <div className="flex flex-col gap-2">
+
+
+            {/* Days */}
+            {hours.map(({ day, closed, open, close }) => (
+                <div
+                    key={day}
+                    className="flex items-center  justify-between  flex-wrap gap-3 py-2.5 border-b border-border/50 last:border-0"
+                >
+                    <div className='flex items-center gap-4 '>
+                        {/* Day name */}
+                        <Label className="w-24 shrink-0 text-md font-medium">{day}</Label>
+
+                        {/* Toggle */}
+                        <Switch
+                            checked={!closed}
+                            onCheckedChange={(checked) => toggleDay(day, checked)}
+                            className="data-[state=checked]:bg-emerald-500 shrink-0"
+                        />
+                    </div>
+
+                    {/* Time inputs or Closed label */}
+                    <div>
+                        {closed ? (
+                            <span className="text-sm text-muted-foreground italic">Closed</span>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="time"
+                                    value={open ?? '09:00'}
+                                    onChange={e => update(day, { open: e.target.value })}
+                                    className="h-8 text-sm tabular-nums"
+                                />
+                                <span className="text-muted-foreground text-sm shrink-0">—</span>
+                                <Input
+                                    type="time"
+                                    value={close ?? '18:00'}
+                                    onChange={e => update(day, { close: e.target.value })}
+                                    className="h-8 text-sm tabular-nums"
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+export default OpenHoursEditor

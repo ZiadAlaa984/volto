@@ -21,12 +21,12 @@ export type Review = {
     created_at: string;
 };
 
-export type OpeningHours = {
-    mon?: string; // "9:00-22:00" or "closed"
-    tue?: string;
-    wed?: string;
-    thu?: string;
-    fri?: string;
-    sat?: string;
-    sun?: string;
-};
+
+export type DayHours = {
+    day: "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday" | "Sunday"
+    closed: boolean
+    open?: string  // "09:00" 24h
+    close?: string // "18:00" 24h
+}
+
+export type OpeningHours = DayHours[]
