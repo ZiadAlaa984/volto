@@ -11,8 +11,9 @@ import SocialIcons from "./SocialIcons";
 import QrCodeTrigger from "./QrCodeTrigger";
 import CardFooter from "./CardFooter";
 import QrCodeModal from "./QrCodeModal";
-import { BusinessType } from "@/types/business";
+import { BusinessType, Review } from "@/types/business";
 import Locations from "./Locations";
+import Reviews from "./Review/Reviews";
 
 const cardVariant = {
     hidden: { opacity: 0, scale: 0.96, y: 24 },
@@ -24,7 +25,7 @@ const cardVariant = {
     },
 };
 
-export default function MainContent({ CardData, businessData }: { CardData: CardType; businessData: BusinessType | null }) {
+export default function MainContent({ CardData, businessData, reviews }: { CardData: CardType; businessData: BusinessType | null; reviews: Review[] }) {
     const [qrOpen, setQrOpen] = useState(false);
 
     const socialLinks = CardData?.links ?? [];
@@ -44,17 +45,16 @@ export default function MainContent({ CardData, businessData }: { CardData: Card
                 animate="show"
                 className="flex justify-center items-start w-full"
             >
-                <Card className="md:max-w-[400px] h-screen md:h-full min-h-[600px] rounded-none md:rounded-xl w-full flex items-start justify-center py-12 px-4">
-                    <div className="w-full flex flex-col items-center gap-6">
+                <Card className="md:max-w-[400px] flex flex-col overflow-hidden h-screen md:h-full min-h-[600px] rounded-none md:rounded-xl w-full flex items-start justify-center py-12 ">
+                    <div className="w-full flex px-4 flex-col items-center gap-6">
                         <ProfileHeader CardData={CardData} businessData={businessData} />
-
                         <LinkButtons links={otherLinks} />
                         {businessData?.locations && <Locations locations={businessData?.locations} />}
                         <SocialIcons links={socialMedia} />
                         <QrCodeTrigger onOpen={() => setQrOpen(true)} />
                         <CardFooter />
-
                     </div>
+                    <Reviews reviews={reviews} cardId={CardData?.id ?? ""} />
                 </Card>
             </motion.div>
 

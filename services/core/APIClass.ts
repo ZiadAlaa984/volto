@@ -6,6 +6,7 @@ export type QueryOptions<T> = {
   orderBy?: { column: keyof T; ascending?: boolean };
   limit?: number;
   skipUserFilter?: boolean;
+  pagination?: { page: number; pageSize?: number };  // ← add this
 };
 
 export class APIClass<T extends Record<string, unknown>> {
@@ -24,10 +25,9 @@ export class APIClass<T extends Record<string, unknown>> {
   }
 
   // ── READ ALL ────────────────────────────────────────────────────────────────
-  async getAll(options?: QueryOptions<T>): Promise<T[]> {
-    let query = this.supabase.from(this.table).select("*");
+  async getAll(options?: QueryOptions<T>): Promise<{ data: T[]; totalPages: number; currentPage: number }> {
+    let query = this.supabase.from(this.table).select("*", { count: "exact" }); // ← count needed for totalPages
 
-    // Only apply user_id filter when explicitly NOT skipped 
     if (this.userId && !options?.skipUserFilter) {
       query = query.eq("user_id", this.userId);
     }
@@ -44,13 +44,22 @@ export class APIClass<T extends Record<string, unknown>> {
       });
     }
 
-    if (options?.limit) {
-      query = query.limit(options.limit);
-    }
+    // ── Pagination ──────────────────────────────────────────────────
+    const pageSize = options?.pagination?.pageSize ?? 10;
+    const page = options?.pagination?.page ?? 1;
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+    // ────────────────────────────────────────────────────────────────
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
     if (error) throw new Error(error.message);
-    return data as T[];
+
+    return {
+      data: data as T[],
+      currentPage: page,
+      totalPages: Math.ceil((count ?? 0) / pageSize),
+    };
   }
 
   // ── READ ONE ────────────────────────────────────────────────────────────────

@@ -1,33 +1,31 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { catchAsync, errorToast } from "@/lib/utils";
+import { catchAsync, errorToast, toastShared } from "@/lib/utils";
 import { createReviewsApi } from "@/services/instances/ReviewsApi";
 import { Review } from "@/types/business";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type NewReviewItem = Omit<Review, "id" | "created_at">;
 
-export function useReviews(cardId?: string) {
+export function useReviews(cardId?: string, page: number = 1) {
     const { session } = useAuth();
     const api = createReviewsApi(session);
     const queryClient = useQueryClient();
 
     // GET all reviews for a card
-    const {
-        isLoading,
-        data: reviewsData,
-        error: getReviewsError,
-    } = useQuery({
-        queryKey: ["reviews", cardId],
+    const { isLoading, data: reviewsData, error: getReviewsError } = useQuery({
+        queryKey: ["reviews", cardId, page],
         enabled: !!cardId,
         queryFn: catchAsync(async () => {
             return api.getAll({
                 filters: { card_id: cardId } as any,
                 skipUserFilter: true,
+                pagination: { page, pageSize: 10 },
             });
         }),
     });
+
 
     // CREATE a review
     const {
@@ -40,6 +38,11 @@ export function useReviews(cardId?: string) {
         }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["reviews", cardId] });
+            toastShared({
+                title: "Review created successfully",
+                description: "The review has been created.",
+            });
+
         },
         onError: errorToast,
     });
@@ -55,6 +58,10 @@ export function useReviews(cardId?: string) {
         }),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["reviews", cardId] });
+            toastShared({
+                title: "Review deleted successfully",
+                description: "The review has been deleted.",
+            });
         },
         onError: errorToast
     });

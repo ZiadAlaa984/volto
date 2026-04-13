@@ -22,7 +22,7 @@ export default function MainContent() {
     const { cardData } = useCard();
     const TAB_CONTENT = [
         { slug: "info-card", title: "Info Business", icon: BriefcaseBusiness, content: <InfoBusinessTab card_id={cardData?.id} /> },
-        { slug: "links", title: "Reviews", icon: MessageCircle, content: <ReviewsTab /> },
+        { slug: "links", title: "Reviews", icon: MessageCircle, content: <ReviewsTab cardId={cardData?.id} /> },
         // { slug: "settings", title: "Theme", icon: Palette, content: <ThemeTab /> },
     ]
 

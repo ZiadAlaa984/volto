@@ -1,10 +1,6 @@
-import { createClient } from "@supabase/supabase-js"
 import { BusinessType } from "@/types/business"
+import { supabase } from "./getCardByUsername"
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export async function getBusinessInfo(card_id: string): Promise<BusinessType | null> {
     const { data, error } = await supabase
