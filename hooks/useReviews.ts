@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type NewReviewItem = Omit<Review, "id" | "created_at">;
 
-export function useReviews(cardId?: string, page: number = 1) {
+export function useReviews(cardId?: string, page: number = 1, onPageChange?: (page: number) => void) {
     const { session } = useAuth();
     const api = createReviewsApi(session);
     const queryClient = useQueryClient();
@@ -21,7 +21,7 @@ export function useReviews(cardId?: string, page: number = 1) {
             return api.getAll({
                 filters: { card_id: cardId } as any,
                 skipUserFilter: true,
-                pagination: { page, pageSize: 10 },
+                pagination: { page, pageSize: 5 },
             });
         }),
     });
@@ -57,15 +57,21 @@ export function useReviews(cardId?: string, page: number = 1) {
             return api.delete(reviewId);
         }),
         onSuccess: () => {
+            const currentData = queryClient.getQueryData<typeof reviewsData>(["reviews", cardId, page]);
+            const itemsOnPage = currentData?.data?.length ?? 0;
+
+            if (itemsOnPage <= 1 && page > 1) {
+                onPageChange?.(page - 1);
+            }
+
             queryClient.invalidateQueries({ queryKey: ["reviews", cardId] });
             toastShared({
                 title: "Review deleted successfully",
                 description: "The review has been deleted.",
             });
         },
-        onError: errorToast
+        onError: errorToast,
     });
-
     return {
         reviewsData,
         createReview,

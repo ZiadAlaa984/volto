@@ -71,7 +71,7 @@ export default function MainContent() {
                                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                                     exit={{ opacity: 0, y: -50, filter: "blur(10px)" }}
                                     transition={{ duration: 0.2, ease: "easeOut" }}
-                                    className="p-8 md:p-12 bg-card"
+                                    className="p-4 md:p-12 bg-card"
                                 >
                                     <div className="space-y-2 mt-4 sm:mt-8 md:mt-8">
                                         {TAB_CONTENT[resolvedTab].content}

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
 import {
     Table,
     TableBody,
@@ -18,7 +17,6 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from '@/components/ui/pagination'
-import { Button } from '@/components/ui/button'
 import { StarRating } from '@/components/shared/star-rating'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useReviews } from '@/hooks/useReviews'
@@ -26,11 +24,8 @@ import ReqStatus from '@/components/shared/ReqStatus'
 import AlertDialogShared from '@/components/shared/AlertDialogShared'
 
 function ReviewsTab({ cardId }: { cardId: string | undefined }) {
-    const [page, setPage] = useState(1)  // ← 1. add page state
-
-    const { reviewsData, isLoading, deleteReview, isPending, error } = useReviews(cardId, page)  // ← 2. pass page
-    console.log("🚀 ~ ReviewsTab ~ reviewsData:", reviewsData)
-
+    const [page, setPage] = useState(1)
+    const { reviewsData, isLoading, deleteReview, isPending, error } = useReviews(cardId, page, setPage);
     const reviews = reviewsData?.data ?? []
     const totalPages = reviewsData?.totalPages ?? 1
     const currentPage = reviewsData?.currentPage ?? 1
@@ -51,7 +46,6 @@ function ReviewsTab({ cardId }: { cardId: string | undefined }) {
                             <TableHead>Action</TableHead>
                         </TableRow>
                     </TableHeader>
-
                     <TableBody>
                         <ReqStatus
                             loading={isLoading}
@@ -91,13 +85,12 @@ function ReviewsTab({ cardId }: { cardId: string | undefined }) {
                         </ReqStatus>
                     </TableBody>
                 </Table>
-
                 {totalPages > 1 && (
                     <Pagination className="mt-4">
                         <PaginationContent>
                             <PaginationItem>
                                 <PaginationPrevious
-                                    href="#"
+
                                     onClick={(e) => {
                                         e.preventDefault()
                                         if (currentPage > 1) setPage(currentPage - 1)
@@ -111,7 +104,7 @@ function ReviewsTab({ cardId }: { cardId: string | undefined }) {
                                 return (
                                     <PaginationItem key={pageNumber}>
                                         <PaginationLink
-                                            href="#"
+                                            className='cursor-pointer'
                                             isActive={pageNumber === currentPage}
                                             onClick={(e) => {
                                                 e.preventDefault()
@@ -126,10 +119,9 @@ function ReviewsTab({ cardId }: { cardId: string | undefined }) {
 
                             <PaginationItem>
                                 <PaginationNext
-                                    href="#"
                                     onClick={(e) => {
                                         e.preventDefault()
-                                        if (currentPage < totalPages) setPage(currentPage + 1)  // ← 3. wire up
+                                        if (currentPage < totalPages) setPage(currentPage + 1)
                                     }}
                                     className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                                 />
