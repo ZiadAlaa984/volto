@@ -3,22 +3,16 @@ import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { OpeningHours, DayHours } from '@/types/business'
 import { Badge } from '@/components/ui/badge'
+import { OpeningHours, DayHours, DEFAULT_HOURS } from '@/lib/Schema/InfoBusiness'
+
+// ── Constants ──────────────────────────────────────────────────────────────
 
 const DAYS: DayHours['day'][] = [
     'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 ]
 
-export const DEFAULT_HOURS: OpeningHours = [
-    { day: 'Monday', closed: false, open: '09:00', close: '18:00' },
-    { day: 'Tuesday', closed: false, open: '09:00', close: '18:00' },
-    { day: 'Wednesday', closed: false, open: '09:00', close: '18:00' },
-    { day: 'Thursday', closed: false, open: '09:00', close: '18:00' },
-    { day: 'Friday', closed: false, open: '09:00', close: '17:00' },
-    { day: 'Saturday', closed: true },
-    { day: 'Sunday', closed: true },
-]
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function parseMinutes(time: string): number {
     const [h, m] = time.split(':').map(Number)
@@ -45,6 +39,8 @@ export function getStatus(hours: OpeningHours): { isOpen: boolean; sublabel: str
     return { isOpen: false, sublabel: `Opens ${today.open}` }
 }
 
+// ── Editor ─────────────────────────────────────────────────────────────────
+
 interface OpenHoursEditorProps {
     initialHours?: OpeningHours
     onChange?: (hours: OpeningHours) => void
@@ -55,8 +51,23 @@ function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEd
         DAYS.map(day => initialHours.find(d => d.day === day) ?? { day, closed: true })
     )
 
+    // track time validation errors per day
+    const [timeErrors, setTimeErrors] = useState<Record<string, string>>({})
+
     function update(day: DayHours['day'], patch: Partial<DayHours>) {
         const next = hours.map(d => d.day === day ? { ...d, ...patch } : d)
+
+        // validate open < close
+        const updated = next.find(d => d.day === day)!
+        if (!updated.closed && updated.open && updated.close) {
+            if (parseMinutes(updated.open) >= parseMinutes(updated.close)) {
+                setTimeErrors(prev => ({ ...prev, [day]: 'Opening time must be before closing time' }))
+                setHours(next)
+                return // don't call onChange if invalid
+            }
+        }
+
+        setTimeErrors(prev => { const e = { ...prev }; delete e[day]; return e })
         setHours(next)
         onChange?.(next)
     }
@@ -65,6 +76,7 @@ function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEd
         if (checked) {
             update(day, { closed: false, open: '09:00', close: '18:00' })
         } else {
+            setTimeErrors(prev => { const e = { ...prev }; delete e[day]; return e })
             update(day, { closed: true, open: undefined, close: undefined })
         }
     }
@@ -74,18 +86,18 @@ function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEd
             {hours.map(({ day, closed, open, close }) => (
                 <div
                     key={day}
-                    className="flex  justify-between  flex-col md:flex-row gap-3 py-2.5 border-b border-border/50 last:border-0"
+                    className="flex justify-between flex-col md:flex-row gap-2 py-2.5 border-b border-border/50 last:border-0"
                 >
-                    <div className="flex items-center justify-between  gap-4">
+                    <div className="flex items-center justify-between gap-4">
                         <Label className="w-24 shrink-0 text-md font-medium">{day}</Label>
                         <Switch
                             checked={!closed}
-                            onCheckedChange={(checked) => toggleDay(day, checked)}
+                            onCheckedChange={checked => toggleDay(day, checked)}
                             className="data-[state=checked]:bg-emerald-500 shrink-0"
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-1">
                         {closed ? (
                             <span className="text-sm text-muted-foreground italic">Closed</span>
                         ) : (
@@ -94,16 +106,19 @@ function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEd
                                     type="time"
                                     value={open ?? '09:00'}
                                     onChange={e => update(day, { open: e.target.value })}
-                                    className="h-8 text-sm  tabular-nums"
+                                    className={`h-8 text-sm tabular-nums ${timeErrors[day] ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                 />
                                 <span className="text-muted-foreground text-sm shrink-0">—</span>
                                 <Input
                                     type="time"
                                     value={close ?? '18:00'}
                                     onChange={e => update(day, { close: e.target.value })}
-                                    className="h-8 text-sm tabular-nums"
+                                    className={`h-8 text-sm tabular-nums ${timeErrors[day] ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                                 />
                             </div>
+                        )}
+                        {timeErrors[day] && (
+                            <p className="text-xs text-destructive">{timeErrors[day]}</p>
                         )}
                     </div>
                 </div>
@@ -114,17 +129,23 @@ function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEd
 
 export default OpenHoursEditor
 
+// ── Badge ──────────────────────────────────────────────────────────────────
 
 export function OpenHoursBadge({ hours }: { hours: OpeningHours }) {
     const status = getStatus(hours)
     return (
         <Badge
             variant="outline"
-            className={` items-center gap-1.5 text-xs px-2.5 py-1 rounded-full flex border `}
+            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${status.isOpen
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                    : 'border-muted bg-muted/50 text-muted-foreground'
+                }`}
         >
             <span className={`w-1.5 h-1.5 rounded-full ${status.isOpen ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
             {status.isOpen ? 'Open now' : 'Closed'}
-            {status.sublabel && <span className="text-xs text-muted-foreground">{status.sublabel}</span>}
+            {status.sublabel && (
+                <span className="font-normal opacity-70">{status.sublabel}</span>
+            )}
         </Badge>
     )
 }

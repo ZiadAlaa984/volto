@@ -1,16 +1,17 @@
-export type BusinessCard = {
-    id: string;
+import { Location } from "@/lib/Schema/InfoBusiness"
+
+export type BusinessType = {
+    id: string
     card_id: string;
-    menu_url: string | null;
-    video_url: string | null;
-    maps_url: string | null;
-    address: string | null;
-    opening_hours: OpeningHours | null;
-    gallery: string[];
-    renewal_day: number;
-    status: 'active' | 'pending' | 'expired';
-    created_at: string;
-};
+    user_id: string;
+    menu: string | null          // always a URL string in DB, File only during form editing
+    video_url: string | null
+    locations: Location[]
+    opening_hours: OpeningHours | null
+    renewal_day: number
+    status: 'active' | 'pending' | 'expired'
+    created_at: string
+}
 
 export type Review = {
     id: string;

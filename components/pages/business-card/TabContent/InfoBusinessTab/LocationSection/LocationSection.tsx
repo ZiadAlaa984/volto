@@ -7,18 +7,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MapPinIcon, LinkIcon, XIcon, PlusIcon } from 'lucide-react'
-
-// ── Types ──────────────────────────────────────────────────────────────────
+import { Location } from '@/lib/Schema/InfoBusiness'
 
 type LocationType = 'text' | 'maps'
-
-export interface Location {
-    id: string
-    type: LocationType
-    title: string           // branch name — e.g. "فرع المول" or "Downtown"
-    address?: string        // text address — used when type = 'text'
-    maps_url?: string       // google maps link — used when type = 'maps'
-}
 
 interface LocationSectionProps {
     value: Location[]
@@ -32,7 +23,7 @@ const mapsUrlSchema = z.string().refine(
         try {
             const u = new URL(url)
             return (
-                u.hostname.includes('google.com/maps') ||
+                u.hostname.includes('google.com') ||
                 u.hostname.includes('maps.app.goo.gl') ||
                 u.hostname.includes('goo.gl')
             )
@@ -42,6 +33,32 @@ const mapsUrlSchema = z.string().refine(
     },
     { message: 'Please paste a valid Google Maps link' }
 )
+
+// ── Lat/lng extractor ──────────────────────────────────────────────────────
+// Handles these Google Maps URL formats:
+// https://www.google.com/maps?q=31.2525,32.2948
+// https://www.google.com/maps/place/.../@31.2525,32.2948,17z
+// https://maps.app.goo.gl/xxx  → can't extract, stored as-is
+
+function extractLatLng(url: string): { lat?: string; lng?: string } {
+    try {
+        // Format: @lat,lng,zoom
+        const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+        if (atMatch) return { lat: atMatch[1], lng: atMatch[2] }
+
+        // Format: ?q=lat,lng
+        const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/)
+        if (qMatch) return { lat: qMatch[1], lng: qMatch[2] }
+
+        // Format: /place/name/lat,lng
+        const placeMatch = url.match(/\/place\/[^/]+\/(-?\d+\.\d+),(-?\d+\.\d+)/)
+        if (placeMatch) return { lat: placeMatch[1], lng: placeMatch[2] }
+
+        return {}
+    } catch {
+        return {}
+    }
+}
 
 // ── Location card ──────────────────────────────────────────────────────────
 
@@ -60,15 +77,20 @@ function LocationCard({ location, onDelete }: { location: Location; onDelete: ()
                                 {location.address}
                             </p>
                         )}
-                        {location.type === 'maps' && location.maps_url && (
-                            <a
-                                href={location.maps_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                            >
-                                Open in Google Maps ↗
-                            </a>
+                        {location.type === 'maps' && (
+                            <div className="flex items-center gap-2">
+                                <a
+                                    href={location.maps_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-blue-600 hover:underline"
+                                >
+                                    Open in Google Maps ↗
+                                </a>
+                                {location.lat && location.lng && (
+                                    <span className="text-xs text-emerald-600">✓ Map preview available</span>
+                                )}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -88,17 +110,17 @@ function LocationCard({ location, onDelete }: { location: Location; onDelete: ()
 
 function LocationSection({ value, onChange }: LocationSectionProps) {
     const [tab, setTab] = useState<LocationType>('text')
-
-    // text form state
     const [textTitle, setTextTitle] = useState('')
     const [textAddress, setTextAddress] = useState('')
-
-    // maps form state
     const [mapsTitle, setMapsTitle] = useState('')
     const [mapsUrl, setMapsUrl] = useState('')
     const [mapsError, setMapsError] = useState('')
 
     const canAdd = value.length < 3
+
+    // extract lat/lng live as user types so they get feedback
+    const { lat, lng } = extractLatLng(mapsUrl)
+    const hasCoords = !!lat && !!lng
 
     function handleAddText() {
         if (!textAddress.trim()) return
@@ -118,11 +140,14 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
             setMapsError(result.error.issues[0].message)
             return
         }
+        const coords = extractLatLng(mapsUrl.trim())
         onChange([...value, {
             id: crypto.randomUUID(),
             type: 'maps',
             title: mapsTitle.trim(),
             maps_url: mapsUrl.trim(),
+            lat: coords.lat,
+            lng: coords.lng,
         }])
         setMapsTitle('')
         setMapsUrl('')
@@ -131,12 +156,10 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
 
     function handleDelete(id: string) {
         onChange(value.filter(l => l.id !== id))
-        // TODO: delete from DB
     }
 
     return (
         <div className="space-y-4">
-
             {canAdd && (
                 <Tabs value={tab} onValueChange={v => setTab(v as LocationType)}>
                     <TabsList className="w-full">
@@ -150,7 +173,7 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                         </TabsTrigger>
                     </TabsList>
 
-                    {/* ── Text address tab ── */}
+                    {/* ── Text address ── */}
                     <TabsContent value="text" className="space-y-3 pt-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="text-title">
@@ -158,7 +181,7 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                             </Label>
                             <Input
                                 id="text-title"
-                                placeholder='e.g. فرع المول — Mall Branch'
+                                placeholder="Mall Branch"
                                 value={textTitle}
                                 onChange={e => setTextTitle(e.target.value)}
                             />
@@ -167,7 +190,7 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                             <Label htmlFor="text-address">Address</Label>
                             <Textarea
                                 id="text-address"
-                                placeholder="e.g. خلف البنك الأهلي، شارع 23، بورسعيد"
+                                placeholder="123 Main St, City, Country"
                                 value={textAddress}
                                 onChange={e => setTextAddress(e.target.value)}
                                 rows={2}
@@ -185,7 +208,7 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                         </Button>
                     </TabsContent>
 
-                    {/* ── Google Maps link tab ── */}
+                    {/* ── Google Maps link ── */}
                     <TabsContent value="maps" className="space-y-3 pt-2">
                         <div className="space-y-1.5">
                             <Label htmlFor="maps-title">
@@ -193,7 +216,7 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                             </Label>
                             <Input
                                 id="maps-title"
-                                placeholder='e.g. فرع وسط البلد — Downtown Branch'
+                                placeholder="Downtown Branch"
                                 value={mapsTitle}
                                 onChange={e => setMapsTitle(e.target.value)}
                             />
@@ -203,10 +226,19 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                             <Input
                                 id="maps-url"
                                 type="url"
-                                placeholder="https://maps.app.goo.gl/..."
+                                placeholder="https://maps.app.goo.gl/... or https://www.google.com/maps/..."
                                 value={mapsUrl}
                                 onChange={e => { setMapsUrl(e.target.value); setMapsError('') }}
                             />
+                            {/* Live feedback on coords extraction */}
+                            {mapsUrl && (
+                                <p className={`text-xs ${hasCoords ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                    {hasCoords
+                                        ? `✓ Map preview will be available (${lat}, ${lng})`
+                                        : '⚠ Map preview not available for short links — use the full Google Maps URL for best results'
+                                    }
+                                </p>
+                            )}
                             {mapsError && (
                                 <p className="text-xs text-destructive">{mapsError}</p>
                             )}
@@ -234,7 +266,6 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                 </p>
             )}
 
-            {/* Location cards */}
             {value.length > 0 && (
                 <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -249,7 +280,6 @@ function LocationSection({ value, onChange }: LocationSectionProps) {
                     ))}
                 </div>
             )}
-
         </div>
     )
 }

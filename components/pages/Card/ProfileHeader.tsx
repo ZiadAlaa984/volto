@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CardHeader } from "@/components/ui/card";
 import { CardType } from "@/types/onboarding";
+import { BusinessType } from "@/types/business";
+import { OpenHoursBadge } from "../business-card/TabContent/InfoBusinessTab/OpenHours/OpenHoursEditor";
 
 function getInitials(name?: string) {
     return name
@@ -11,7 +13,7 @@ function getInitials(name?: string) {
         : "?";
 }
 
-export default function ProfileHeader({ CardData }: { CardData: CardType }) {
+export default function ProfileHeader({ CardData, businessData }: { CardData: CardType; businessData: BusinessType | null }) {
     return (
         <CardHeader className="flex flex-col items-center gap-4">
             <motion.div
@@ -32,7 +34,7 @@ export default function ProfileHeader({ CardData }: { CardData: CardType }) {
             </motion.div>
 
             <motion.div
-                className="text-center space-y-1"
+                className="text-center space-y-2"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
@@ -44,6 +46,9 @@ export default function ProfileHeader({ CardData }: { CardData: CardType }) {
                     <p className="text-xl leading-snug text-muted-foreground">
                         {CardData.bio}
                     </p>
+                )}
+                {businessData?.opening_hours && (
+                    <OpenHoursBadge hours={businessData.opening_hours} />
                 )}
             </motion.div>
         </CardHeader>

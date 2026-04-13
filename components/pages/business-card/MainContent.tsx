@@ -8,6 +8,7 @@ import GooeySvgFilter from "@/components/fancy/filter/gooey-svg-filter"
 import { BriefcaseBusiness, MessageCircle, Palette } from "lucide-react"
 import InfoBusinessTab from "./TabContent/InfoBusinessTab/InfoBusinessTab"
 import ReviewsTab from "./TabContent/ReviewsTab/ReviewsTab"
+import { useCard } from "@/hooks/useCard"
 
 
 export default function MainContent() {
@@ -18,9 +19,9 @@ export default function MainContent() {
     const screenSize = useScreenSize()
     const browserName = useDetectBrowser()
     const isSafari = browserName === "Safari"
-
+    const { cardData } = useCard();
     const TAB_CONTENT = [
-        { slug: "info-card", title: "Info Business", icon: BriefcaseBusiness, content: <InfoBusinessTab /> },
+        { slug: "info-card", title: "Info Business", icon: BriefcaseBusiness, content: <InfoBusinessTab card_id={cardData?.id} /> },
         { slug: "links", title: "Reviews", icon: MessageCircle, content: <ReviewsTab /> },
         // { slug: "settings", title: "Theme", icon: Palette, content: <ThemeTab /> },
     ]

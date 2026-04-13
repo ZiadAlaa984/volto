@@ -1,76 +1,71 @@
 "use client"
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useRouter } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
+import { Form } from '@/components/ui/form'
 import { HourglassIcon, MapPinIcon, UtensilsIcon, VideoIcon } from 'lucide-react'
-import OpenHoursEditor, { DEFAULT_HOURS, OpenHoursBadge } from './OpenHours/OpenHoursEditor'
+import OpenHoursEditor, { OpenHoursBadge } from './OpenHours/OpenHoursEditor'
 import MenuSection from './MenuSection/MenuSection'
 import VideoSection from './VideoSection/VideoSection'
 import LocationSection from './LocationSection/LocationSection'
+import { DEFAULT_HOURS, formSchema, InfoFormValues } from '@/lib/Schema/InfoBusiness'
+import useBusinessInfo from '@/hooks/useBusinessInfo'
+import Loading from '@/app/loading'
 
-// ── Schemas ────────────────────────────────────────────────────────────────
+function InfoBusinessTab({ card_id }: { card_id: string | undefined }) {
+    const router = useRouter()
+    const { businessData, isLoading, updateBusiness, isPending } = useBusinessInfo(card_id || "")
 
-export const dayHoursSchema = z.object({
-    day: z.enum(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']),
-    closed: z.boolean(),
-    open: z.string().optional(),
-    close: z.string().optional(),
-})
+    // ─── Form ─────────────────────────────────────────────────────────────
 
-export const openingHoursSchema = z.array(dayHoursSchema)
-
-export const locationSchema = z.object({
-    id: z.string(),
-    type: z.enum(['text', 'maps']),
-    title: z.string(),
-    address: z.string().optional(),
-    maps_url: z.string().optional(),
-})
-
-const formSchema = z.object({
-    openingHours: openingHoursSchema,
-    locations: z.array(locationSchema).max(3),
-    menu_url: z.string().url({ message: 'Please enter a valid URL' }).or(z.literal('')),
-    video_url: z.string().url({ message: 'Please enter a valid URL' }).or(z.literal('')),
-})
-
-// ── Types ──────────────────────────────────────────────────────────────────
-
-export type DayHours = z.infer<typeof dayHoursSchema>
-export type OpeningHours = z.infer<typeof openingHoursSchema>
-export type Location = z.infer<typeof locationSchema>
-export type InfoFormValues = z.infer<typeof formSchema>
-
-// ── Component ──────────────────────────────────────────────────────────────
-
-function InfoBusinessTab() {
     const form = useForm<InfoFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            openingHours: DEFAULT_HOURS,
+            opening_hours: DEFAULT_HOURS,
             locations: [],
-            menu_url: '',
+            menu: null,
             video_url: '',
+        },
+        // sync form when businessData loads from API
+        values: {
+            opening_hours: businessData?.opening_hours ?? DEFAULT_HOURS,
+            locations: businessData?.locations ?? [],
+            menu: (typeof businessData?.menu === 'string') ? businessData.menu : null,         // string URL from DB or null
+            video_url: businessData?.video_url ?? '',
         },
     })
 
-    function onSubmit(values: InfoFormValues) {
-        // TODO: send values to your API / server action
-        console.log('Submit:', values)
+    // ─── Submit ───────────────────────────────────────────────────────────
+
+    async function onSubmit(values: InfoFormValues) {
+        if (!businessData?.id) return
+
+        await updateBusiness({
+            id: businessData.id,
+            data: {
+                opening_hours: values.opening_hours,
+                locations: values.locations,
+                menu: values.menu as any,               // string | File | null
+                video_url: values.video_url || null,
+            },
+            currentMenu: businessData.menu,      // existing URL so hook can delete if replaced
+        })
     }
+
+    // ─── Sections ─────────────────────────────────────────────────────────
 
     const sections = [
         {
             title: 'Opening Hours',
             icon: <HourglassIcon className="w-5 h-5 text-muted-foreground" />,
-            action: <OpenHoursBadge hours={form.watch('openingHours')} />,
+            action: <OpenHoursBadge hours={form.watch('opening_hours')} />,
             content: (
                 <Controller
                     control={form.control}
-                    name="openingHours"
+                    name="opening_hours"
                     render={({ field }) => (
                         <OpenHoursEditor
                             initialHours={field.value}
@@ -83,45 +78,18 @@ function InfoBusinessTab() {
         {
             title: 'Menu',
             icon: <UtensilsIcon className="w-5 h-5 text-muted-foreground" />,
-            description: 'Add your menu link',
             action: null,
-            content: (
-                <Controller
-                    control={form.control}
-                    name="menu_url"
-                    render={({ field, fieldState }) => (
-                        <MenuSection
-                            value={field.value}
-                            onChange={field.onChange}
-                            error={fieldState.error?.message}
-                        />
-                    )}
-                />
-            ),
+            content: <MenuSection control={form.control} />,
         },
         {
             title: 'Video',
             icon: <VideoIcon className="w-5 h-5 text-muted-foreground" />,
-            description: 'Add a video from YouTube, Vimeo, Instagram or TikTok',
             action: null,
-            content: (
-                <Controller
-                    control={form.control}
-                    name="video_url"
-                    render={({ field, fieldState }) => (
-                        <VideoSection
-                            value={field.value}
-                            onChange={field.onChange}
-                            error={fieldState.error?.message}
-                        />
-                    )}
-                />
-            ),
+            content: <VideoSection control={form.control} />,
         },
         {
             title: 'Locations',
             icon: <MapPinIcon className="w-5 h-5 text-muted-foreground" />,
-            description: 'Add up to 3 branches',
             action: null,
             content: (
                 <Controller
@@ -138,35 +106,36 @@ function InfoBusinessTab() {
         },
     ]
 
-    return (
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <ScrollArea className="h-full w-full">
-                <div className="space-y-4 pr-4">
-                    {sections.map((section, index) => (
-                        <Card key={index}>
-                            <CardHeader className="flex justify-between items-center flex-row">
-                                <div>
-                                    <CardTitle className="flex items-center gap-2 text-base">
-                                        {section.icon}
-                                        {section.title}
-                                    </CardTitle>
-                                    {section.description && (
-                                        <CardDescription>{section.description}</CardDescription>
-                                    )}
-                                </div>
-                                {section.action}
-                            </CardHeader>
-                            <CardContent>{section.content}</CardContent>
-                        </Card>
-                    ))}
-                </div>
-                <ScrollBar orientation="vertical" />
-            </ScrollArea>
+    if (isLoading) return <Loading />
 
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Saving...' : 'Save'}
-            </Button>
-        </form>
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+                <ScrollArea className="h-[calc(100vh-200px)] w-full">
+                    <div className="space-y-4 pb-6">
+                        {sections.map((section, index) => (
+                            <Card key={index}>
+                                <CardHeader className="flex justify-between items-center flex-row">
+                                    <div>
+                                        <CardTitle className="flex items-center gap-2 text-base">
+                                            {section.icon}
+                                            {section.title}
+                                        </CardTitle>
+                                    </div>
+                                    {section.action}
+                                </CardHeader>
+                                <CardContent>{section.content}</CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                    <ScrollBar orientation="vertical" />
+                </ScrollArea>
+
+                <Button type="submit" className="w-full" disabled={isPending}>
+                    {isPending ? 'Saving...' : 'Save'}
+                </Button>
+            </form>
+        </Form>
     )
 }
 
