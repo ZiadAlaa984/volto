@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import Router from "@/lib/route";
 import { CardType } from "@/types/onboarding";
+import { Badge } from "@/components/ui/badge";
 
 type CardItem = {
     title: string;
@@ -54,6 +55,9 @@ function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }:
 
                 </div>
             ),
+            Action: <Badge variant="outline">
+                {cardData?.card_type}
+            </Badge>
         },
         {
             title: "Theme",

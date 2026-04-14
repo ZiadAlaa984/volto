@@ -7,6 +7,7 @@ import { useLinkForm } from "@/hooks/useLinkForm";
 import Router from "@/lib/route";
 import { useRouter } from "next/navigation";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+
 export default function LinksTab({ cardId }: { cardId: string }) {
 
     const { linksData, syncLinks, isPending, isLoading } = useLinks(cardId);
@@ -22,8 +23,8 @@ export default function LinksTab({ cardId }: { cardId: string }) {
         handleAddLink,
         handleSubmit
     } = useLinkForm({
-        defaultLinks: linksData || [],
-        values: linksData || [],
+        defaultLinks: linksData?.data || [],
+        values: linksData?.data || [],
         onSubmit: (links) => {
             syncLinks(links);
         },

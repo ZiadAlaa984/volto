@@ -13,17 +13,12 @@ function VideoSection({ control }: VideoSectionProps) {
         <FormField
             control={control}
             name="video_url"
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
                 <FormItem>
                     <FormLabel>Video URL</FormLabel>
                     <FormControl>
                         <Input
-                            placeholder="YouTube, Vimeo, Instagram, TikTok..."
-                            className={
-                                fieldState.isDirty && !fieldState.error
-                                    ? 'border-emerald-500 focus-visible:ring-emerald-500'
-                                    : ''
-                            }
+                            placeholder="Instagram, TikTok, YouTube, facebook..."
                             {...field}
                         />
                     </FormControl>

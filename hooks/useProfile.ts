@@ -27,7 +27,7 @@ export function useProfile() {
         limit: 1,
         skipUserFilter: true,
       });
-      return matches.length > 0;
+      return matches.data?.length > 0;
     },
     onError: (error) => {
       toastShared({ title: "Failed to check username", description: error.message });

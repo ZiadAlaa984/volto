@@ -136,12 +136,15 @@ export function OpenHoursBadge({ hours }: { hours: OpeningHours }) {
     return (
         <Badge
             variant="outline"
-            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${status.isOpen
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
-                    : 'border-muted bg-muted/50 text-muted-foreground'
+            className={`flex items-center justify-center  w-fit gap-1.5 text-xs px-2.5 py-1 rounded-full border ${status.isOpen
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400'
+                : 'border-muted bg-muted/50 text-muted-foreground'
                 }`}
         >
-            <span className={`w-1.5 h-1.5 rounded-full ${status.isOpen ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
+            <span className="relative flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${status.isOpen ? 'bg-emerald-500' : 'bg-muted-foreground'} opacity-75`} />
+                <span className={`relative  inline-flex h-2 w-2 rounded-full ${status.isOpen ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
+            </span>
             {status.isOpen ? 'Open now' : 'Closed'}
             {status.sublabel && (
                 <span className="font-normal opacity-70">{status.sublabel}</span>

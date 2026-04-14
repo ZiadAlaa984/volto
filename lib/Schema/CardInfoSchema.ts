@@ -23,6 +23,7 @@ export type CardInfoFormValues = z.infer<typeof CardInfoSchema>;
 export interface Card {
     id: string;
     user_id: string;
+    card_type: 'business' | 'personal';
     name: string;
     bio?: string;           // ─── FIX: optional to match schema's .optional()
     created_at: string;
