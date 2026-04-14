@@ -12,10 +12,14 @@ import { HourglassIcon, MapPinIcon, UtensilsIcon, VideoIcon } from "lucide-react
 import OpenHoursEditor, { OpenHoursBadge } from "./OpenHours/OpenHoursEditor";
 import MenuSection from "./MenuSection/MenuSection";
 import VideoSection from "./VideoSection/VideoSection";
-import LocationSection, { LocationTabValue } from "./LocationSection/LocationSection";
 import { DEFAULT_HOURS, formSchema, InfoFormValues } from "@/lib/Schema/InfoBusiness";
 import Loading from "@/app/loading";
 import { BusinessType } from "@/types/business";
+import { LocationSection } from "./LocationSection/LocationSection";
+
+
+// todo Menu, RLS business card, responsive
+// todo Card design
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,7 +36,7 @@ interface InfoBusinessTabProps {
 
 // ─── Location tab config ──────────────────────────────────────────────────────
 
-const LOCATION_TABS: { value: LocationTabValue; label: string }[] = [
+const LOCATION_TABS: { value: "address" | "google-map"; label: string }[] = [
     { value: "address", label: "Address" },
     { value: "google-map", label: "Google Map" },
 ];
@@ -69,7 +73,7 @@ function InfoBusinessTab({
     isPending,
     isLoading,
 }: InfoBusinessTabProps) {
-    const [locationTab, setLocationTab] = useState<LocationTabValue>("address");
+    const [locationTab, setLocationTab] = useState<"address" | "google-map">("address");
 
     // ── Form ───────────────────────────────────────────────────────────────────
 
@@ -96,16 +100,16 @@ function InfoBusinessTab({
         if (!businessData?.id) return;
 
         console.log("🚀 ~ onSubmit ~ values:", values)
-        // await updateBusiness({
-        //     id: businessData.id,
-        //     data: {
-        //         opening_hours: values.opening_hours,
-        //         locations: values.locations,
-        //         menu: values.menu as any,
-        //         video_url: values.video_url || null,
-        //     },
-        //     currentMenu: businessData.menu,
-        // });
+        await updateBusiness({
+            id: businessData.id,
+            data: {
+                opening_hours: values.opening_hours,
+                locations: values.locations,
+                menu: values.menu as any,
+                video_url: values.video_url || null,
+            },
+            currentMenu: businessData.menu,
+        });
     }
 
     // ── Sections config ────────────────────────────────────────────────────────
@@ -138,7 +142,7 @@ function InfoBusinessTab({
             icon: <MapPinIcon className="w-5 h-5 text-muted-foreground" />,
             // FloatingTabs in the header drives the form inside LocationSection
             action: (
-                <FloatingTabs<LocationTabValue>
+                <FloatingTabs<"address" | "google-map">
                     tabs={LOCATION_TABS}
                     defaultValue="address"
                     onChange={setLocationTab}
@@ -184,7 +188,7 @@ function InfoBusinessTab({
                 <Button
                     type="submit"
                     className="w-full mt-4"
-                    disabled={isPending}
+                    disabled={isPending || !form.formState.isDirty}
                 >
                     {isPending ? "Saving…" : "Save"}
                 </Button>

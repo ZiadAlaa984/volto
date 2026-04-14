@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { MapPinIcon, LinkIcon, XIcon, PlusIcon } from "lucide-react";
+import { LinkIcon, Loader2Icon, MapPinIcon, PlusIcon, XIcon } from "lucide-react";
 import { Location } from "@/lib/Schema/InfoBusiness";
+import { useState } from "react";
+import useResolvedMapsUrl from "@/hooks/useResolvedMapsUrl";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const MAX_LOCATIONS = 3;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -16,52 +20,11 @@ export type LocationTabValue = "address" | "google-map";
 export interface LocationSectionProps {
     value: Location[];
     onChange: (locations: Location[]) => void;
-    /** Controlled by the FloatingTabs in the Card header */
     activeTab: LocationTabValue;
 }
 
-// ─── Validation ───────────────────────────────────────────────────────────────
 
-const mapsUrlSchema = z.string().refine(
-    (url) => {
-        try {
-            const u = new URL(url);
-            return (
-                u.hostname.includes("google.com") ||
-                u.hostname.includes("maps.app.goo.gl") ||
-                u.hostname.includes("goo.gl")
-            );
-        } catch {
-            return false;
-        }
-    },
-    { message: "Please paste a valid Google Maps link" }
-);
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Extracts lat/lng from common Google Maps URL formats:
- *  - @lat,lng,zoom
- *  - ?q=lat,lng
- *  - /place/name/lat,lng
- */
-function extractLatLng(url: string): { lat?: string; lng?: string } {
-    try {
-        const atMatch = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-        if (atMatch) return { lat: atMatch[1], lng: atMatch[2] };
-
-        const qMatch = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-        if (qMatch) return { lat: qMatch[1], lng: qMatch[2] };
-
-        const placeMatch = url.match(/\/place\/[^/]+\/(-?\d+\.\d+),(-?\d+\.\d+)/);
-        if (placeMatch) return { lat: placeMatch[1], lng: placeMatch[2] };
-
-        return {};
-    } catch {
-        return {};
-    }
-}
 
 // ─── Location Card ────────────────────────────────────────────────────────────
 
@@ -76,18 +39,15 @@ function LocationCard({ location, onDelete }: LocationCardProps) {
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2">
                     <MapPinIcon className="w-4 h-4 mt-0.5 shrink-0 text-primary" />
-
                     <div className="space-y-0.5">
                         {location.title && (
                             <p className="text-sm font-medium">{location.title}</p>
                         )}
-
                         {location.type === "text" && location.address && (
                             <p className="text-xs text-muted-foreground leading-relaxed">
                                 {location.address}
                             </p>
                         )}
-
                         {location.type === "maps" && (
                             <div className="flex flex-wrap items-center gap-2">
                                 <a
@@ -107,7 +67,6 @@ function LocationCard({ location, onDelete }: LocationCardProps) {
                         )}
                     </div>
                 </div>
-
                 <button
                     type="button"
                     onClick={onDelete}
@@ -157,7 +116,6 @@ function AddressForm({ onAdd }: AddressFormProps) {
                     onChange={(e) => setTitle(e.target.value)}
                 />
             </div>
-
             <div className="space-y-1.5">
                 <Label htmlFor="text-address">Address</Label>
                 <Textarea
@@ -168,7 +126,6 @@ function AddressForm({ onAdd }: AddressFormProps) {
                     rows={2}
                 />
             </div>
-
             <Button
                 type="button"
                 variant="outline"
@@ -183,7 +140,7 @@ function AddressForm({ onAdd }: AddressFormProps) {
     );
 }
 
-// ─── Google Maps Form ─────────────────────────────────────────────────────────
+// ─── Maps Form ────────────────────────────────────────────────────────────────
 
 interface MapsFormProps {
     onAdd: (location: Location) => void;
@@ -192,30 +149,58 @@ interface MapsFormProps {
 function MapsForm({ onAdd }: MapsFormProps) {
     const [title, setTitle] = useState("");
     const [url, setUrl] = useState("");
-    const [error, setError] = useState("");
 
-    const { lat, lng } = extractLatLng(url);
-    const hasCoords = !!lat && !!lng;
+    const { status, result } = useResolvedMapsUrl(url);
 
     function handleAdd() {
-        const result = mapsUrlSchema.safeParse(url.trim());
-        if (!result.success) {
-            setError(result.error.issues[0].message);
-            return;
-        }
-        const coords = extractLatLng(url.trim());
+        if (!url.trim() || status === "error") return;
         onAdd({
             id: crypto.randomUUID(),
             type: "maps",
             title: title.trim(),
-            maps_url: url.trim(),
-            lat: coords.lat,
-            lng: coords.lng,
+            maps_url: result?.resolvedUrl ?? url.trim(),
+            lat: result?.lat,
+            lng: result?.lng,
         });
         setTitle("");
         setUrl("");
-        setError("");
     }
+
+    const hint = (() => {
+        if (!url) return null;
+        switch (status) {
+            case "loading":
+                return (
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Loader2Icon className="w-3 h-3 animate-spin" />
+                        Resolving link…
+                    </span>
+                );
+            case "success":
+                return (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                        ✓ Map preview will be available ({result!.lat}, {result!.lng})
+                    </span>
+                );
+            case "no-coords":
+                return (
+                    <span className="text-xs text-amber-600 dark:text-amber-400">
+                        ⚠ Link resolved but no coordinates found — preview unavailable
+                    </span>
+                );
+            case "error":
+                return (
+                    <span className="text-xs text-destructive">
+                        Please paste a valid Google Maps link
+                    </span>
+                );
+            default:
+                return null;
+        }
+    })();
+
+    const canSubmit =
+        url.trim().length > 0 && status !== "error" && status !== "loading";
 
     return (
         <div className="space-y-3 pt-2">
@@ -231,7 +216,6 @@ function MapsForm({ onAdd }: MapsFormProps) {
                     onChange={(e) => setTitle(e.target.value)}
                 />
             </div>
-
             <div className="space-y-1.5">
                 <Label htmlFor="maps-url">Google Maps link</Label>
                 <Input
@@ -239,41 +223,26 @@ function MapsForm({ onAdd }: MapsFormProps) {
                     type="url"
                     placeholder="https://maps.app.goo.gl/... or https://www.google.com/maps/..."
                     value={url}
-                    onChange={(e) => {
-                        setUrl(e.target.value);
-                        setError("");
-                    }}
+                    onChange={(e) => setUrl(e.target.value)}
                 />
-
-                {url && (
-                    <p
-                        className={`text-xs ${hasCoords
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-amber-600 dark:text-amber-400"
-                            }`}
-                    >
-                        {hasCoords
-                            ? `✓ Map preview will be available (${lat}, ${lng})`
-                            : "⚠ Use the full Google Maps URL for a map preview"}
-                    </p>
-                )}
-
-                {error && <p className="text-xs text-destructive">{error}</p>}
-
+                {hint}
                 <p className="text-xs text-muted-foreground">
-                    Open Google Maps → find your location → copy the{" "}
-                    <strong>browser URL</strong> → paste here
+                    Open Google Maps → find your location → copy{" "}
+                    <strong>any link</strong> (short or full) → paste here
                 </p>
             </div>
-
             <Button
                 type="button"
                 variant="outline"
                 className="w-full gap-2"
-                disabled={!url.trim()}
+                disabled={!canSubmit}
                 onClick={handleAdd}
             >
-                <LinkIcon className="w-4 h-4" />
+                {status === "loading" ? (
+                    <Loader2Icon className="w-4 h-4 animate-spin" />
+                ) : (
+                    <LinkIcon className="w-4 h-4" />
+                )}
                 Add location
             </Button>
         </div>
@@ -282,9 +251,7 @@ function MapsForm({ onAdd }: MapsFormProps) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const MAX_LOCATIONS = 3;
-
-function LocationSection({ value, onChange, activeTab }: LocationSectionProps) {
+export function LocationSection({ value, onChange, activeTab }: LocationSectionProps) {
     const canAdd = value.length < MAX_LOCATIONS;
 
     function handleAdd(location: Location) {
@@ -297,7 +264,7 @@ function LocationSection({ value, onChange, activeTab }: LocationSectionProps) {
 
     return (
         <div className="space-y-4">
-            {/* Form — driven by parent FloatingTabs */}
+            {/* Form — driven by activeTab from FloatingTabs in the card header */}
             {canAdd ? (
                 activeTab === "address" ? (
                     <AddressForm onAdd={handleAdd} />
