@@ -12,11 +12,12 @@ export const hasEnvVars =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 type ToastType = "success" | "error" | "info" | "warning" | "promise";
+type CallableToastType = Exclude<ToastType, "promise">; // ← remove promise
 
 type ToastProps = {
   title: string;
   description?: string;
-  variant?: ToastType;
+  variant?: CallableToastType; // ← use this here
   isLoading?: boolean;
 };
 
@@ -26,26 +27,26 @@ export function toastShared({
   variant = "success",
   isLoading = false,
 }: ToastProps) {
+  const options = {
+    title,
+    description,
+    fill: "fff/50",
+    styles: {
+      title: "text-white!",
+      description: "text-white/80!",
+    },
+  };
+
   if (isLoading) {
     sileo.show({
-      title,
-      description,
-      fill: "fff/50",
+      ...options,
       styles: {
         title: "text-white!",
         description: "text-white/75!",
       },
     });
   } else {
-    sileo[variant]({
-      title,
-      description,
-      fill: "fff/50",
-      styles: {
-        title: "text-white!",
-        description: "text-white/80!",
-      },
-    });
+    (sileo[variant] as (opts: typeof options) => void)(options); // ← cast to known signature
   }
 }
 
@@ -106,3 +107,11 @@ export function sanitizeSlug(value: string) {
 // export function getOrigin() {
 //   return typeof window !== "undefined" ? window.location.origin : "";
 // }
+
+
+export function formatDate(value: string): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (isNaN(date.getTime())) return value          // plain text → show as-is
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}

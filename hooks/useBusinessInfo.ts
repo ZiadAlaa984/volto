@@ -7,23 +7,36 @@ import { useUpload } from "./useUpload"
 import { BusinessType } from "@/types/business"
 import { useRouter } from "next/navigation"
 import Router from "@/lib/route"
+import { CardType } from "@/types/onboarding"
 
-const useBusinessInfo = (card_id?: string) => {
+const ALLOWED_MENU_TYPES = [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+]
+
+const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
     const queryClient = useQueryClient()
     const { session } = useAuth()
     const { uploadFile, deleteFile } = useUpload()
     const api = createBuinessApi(session)
-    const router = useRouter();
-    // ─── Query ─────────────────────────────────────────────────────────────
+    const router = useRouter()
 
+    // ─── Guard: JS-level ownership + card_type check ───────────────────────
+    const isBusinessOwner =
+        !!cardData &&
+        cardData.card_type === "business" &&
+        cardData.user_id === session?.user?.id
+
+    // ─── Query ─────────────────────────────────────────────────────────────
     const { data: businessData, isLoading: isLoadingBusiness } = useQuery({
         queryKey: ["business", card_id],
         enabled: !!card_id,
         queryFn: async () => {
-            console.log(card_id);
-
             try {
-                return await api.getById(card_id!, "card_id") ?? null
+                return (await api.getById(card_id!, "card_id")) ?? null
             } catch (error) {
                 errorToast(error as Error)
                 return null
@@ -31,18 +44,18 @@ const useBusinessInfo = (card_id?: string) => {
         },
     })
 
-    // create
+    // ─── Create ────────────────────────────────────────────────────────────
     const { isPending: isCreating, mutateAsync: createBusiness } = useMutation({
         mutationFn: async (data: Partial<BusinessType>) => {
             await api.create(data)
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["business"] });
+            queryClient.invalidateQueries({ queryKey: ["business"] })
             toastShared({
                 title: "Business created successfully",
                 description: "Your business has been created successfully.",
-                variant: "success"
-            });
+                variant: "success",
+            })
             router.push(Router.DASHBOARD.businessCard)
         },
         onError: (error) => {
@@ -51,31 +64,46 @@ const useBusinessInfo = (card_id?: string) => {
     })
 
     // ─── Update ────────────────────────────────────────────────────────────
-
     const { isPending: isUpdating, mutateAsync: updateBusiness } = useMutation({
         mutationFn: async ({
             id,
             data,
-            currentMenu,       // existing menu URL from DB (string | null)
+            currentMenu,
         }: {
             id: string
-            data: Partial<BusinessType> & { menu?: any }
+            data: Omit<Partial<BusinessType>, "menu"> & { menu?: File | string | null } // ← override menu type
             currentMenu?: string | null
         }) => {
-            if (!id) return
+            console.log("🚀 ~ useBusinessInfo ~ card_id:", card_id)
+            if (!id || !card_id) return
 
-            let updatedData: Partial<BusinessType> = { ...data }
+            if (!isBusinessOwner) {
+                throw new Error("Only the business card owner can update this.")
+            }
+
+            let updatedData: Partial<BusinessType> = {
+                ...data,
+                menu: data.menu instanceof File ? undefined : data.menu ?? undefined // temp, will be replaced below
+            }
 
             if (data.menu instanceof File) {
-                // New file selected — delete old if exists, upload new
-                if (currentMenu) await deleteFile(currentMenu)
-                updatedData.menu = await uploadFile(data.menu)
+                if (!ALLOWED_MENU_TYPES.includes(data.menu.type)) {
+                    throw new Error(
+                        "Invalid file type. Only PDF, JPEG, PNG, WebP, and GIF are allowed."
+                    )
+                }
+
+                if (currentMenu) await deleteFile(currentMenu, { bucket: "menu", folder: card_id })
+
+
+                updatedData.menu = await uploadFile(data.menu, { bucket: "menu", folder: card_id })
+
             } else if (data.menu === null) {
-                // Menu explicitly removed
-                if (currentMenu) await deleteFile(currentMenu)
-                updatedData.menu = null
+                if (currentMenu) await deleteFile(currentMenu, { bucket: "menu", folder: card_id })
+                updatedData.menu = undefined // or null if your DB accepts it
+            } else {
+                updatedData.menu = data.menu // string URL unchanged
             }
-            // string URL unchanged — pass through as-is
 
             await api.update(id, updatedData)
         },
@@ -92,6 +120,7 @@ const useBusinessInfo = (card_id?: string) => {
         isPending: isUpdating || isCreating,
         businessData,
         isLoading: isLoadingBusiness,
+        isBusinessOwner, // expose so UI can conditionally show upload button
     }
 }
 

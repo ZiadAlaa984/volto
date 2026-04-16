@@ -1,9 +1,11 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { Review } from "@/types/business"
 import { cn } from "@/lib/utils"
 import { StarRating } from "@/components/shared/star-rating"
+import { cairo } from "@/lib/fonts"
 
 export interface TestimonialMarqueeProps {
     items: Review[]
@@ -13,34 +15,75 @@ export interface TestimonialMarqueeProps {
     containerClassName?: string
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Returns a formatted date if value is a valid ISO/timestamp,
+ * returns the raw string as-is for relative text like "2 years ago",
+ * returns null if value is empty / undefined.
+ */
+function formatDate(value: string | null | undefined): string | null {
+    if (!value || value.trim() === "") return null
+    const date = new Date(value)
+    if (isNaN(date.getTime())) return value   // plain text → show as-is
+    return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    })
+}
+
+/**
+ * Safely parses review_image — handles JSON array, plain URL, or null.
+ */
+function parseImages(raw: string | null | undefined): string[] {
+    if (!raw || raw.trim() === "") return []
+    try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+            return parsed.filter((u): u is string => typeof u === "string" && u.startsWith("http"))
+        }
+    } catch {
+        if (raw.startsWith("http")) return [raw]
+    }
+    return []
+}
+
+function getInitials(name: string) {
+    return name
+        .split(" ")
+        .map((n) => n[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+}
+
+// ── Styles ───────────────────────────────────────────────────────────────────
+
 const MarqueeStyles = React.memo(() => (
-    <style>
-        {`
+    <style>{`
         @keyframes marquee-left {
           from { transform: translate3d(0, 0, 0); }
-          to { transform: translate3d(-100%, 0, 0); }
+          to   { transform: translate3d(-100%, 0, 0); }
         }
         @keyframes marquee-right {
           from { transform: translate3d(-100%, 0, 0); }
-          to { transform: translate3d(0, 0, 0); }
+          to   { transform: translate3d(0, 0, 0); }
         }
-        .animate-marquee-left {
-           animation: marquee-left var(--duration) linear infinite;
-        }
-        .animate-marquee-right {
-           animation: marquee-right var(--duration) linear infinite;
-        }
-        `}
-    </style>
+        .animate-marquee-left  { animation: marquee-left  var(--duration) linear infinite; }
+        .animate-marquee-right { animation: marquee-right var(--duration) linear infinite; }
+    `}</style>
 ))
 MarqueeStyles.displayName = "MarqueeStyles"
+
+// ── MarqueeRow ────────────────────────────────────────────────────────────────
 
 const MarqueeRow = React.memo(({
     children,
     direction = "left",
-    speed = 40,
+    speed = 80,
     className,
-    pauseOnHover = true
+    pauseOnHover = true,
 }: {
     children: React.ReactNode
     direction?: "left" | "right"
@@ -67,15 +110,7 @@ const MarqueeRow = React.memo(({
 ))
 MarqueeRow.displayName = "MarqueeRow"
 
-// ── Avatar initials fallback ─────────────────────────────────────────────────
-function getInitials(name: string) {
-    return name
-        .split(" ")
-        .map((n) => n[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase()
-}
+// ── TestimonialCard ───────────────────────────────────────────────────────────
 
 const TestimonialCard = React.memo(({
     item,
@@ -84,6 +119,9 @@ const TestimonialCard = React.memo(({
     item: Review
     variant?: "default" | "flush"
 }) => {
+    const dateLabel = formatDate(item.created_at)
+    const hasText = !!item.review_text?.trim()
+
     const baseCard = variant === "flush"
         ? "relative group flex h-auto w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-none border-r border-border bg-black/5 dark:bg-white/5 p-6 transition-all hover:bg-black/10 dark:hover:bg-white/10 transform-gpu [backface-visibility:hidden]"
         : "relative group flex h-auto w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-black/5 dark:bg-white/5 p-6 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transform-gpu [backface-visibility:hidden]"
@@ -93,33 +131,28 @@ const TestimonialCard = React.memo(({
             <div className="absolute inset-0 bg-gradient-to-br from-black/5 dark:from-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
             <div className="relative z-10 flex flex-col gap-4">
-                {/* ── Star rating ── */}
+                {/* Stars */}
                 <StarRating rating={item.rating} />
 
-                {/* ── Review text ── */}
-                <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4">
-                    &quot;{item.review_text}&quot;
-                </p>
+                {/* Review text — only rendered if it exists */}
+                {hasText && (
+                    <p className={`text-sm leading-relaxed text-start  ${cairo.className}  line-clamp-3`}>
+                        &quot;{item.review_text}&quot;
+                    </p>
+                )}
 
-                {/* ── Customer info ── */}
+                {/* Customer info */}
                 <div className="flex items-center gap-3 pt-2">
-                    {/* Avatar with initials fallback — Review has no avatar field */}
-                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-border bg-muted flex items-center justify-center">
-                        <span className="text-xs font-medium text-muted-foreground">
-                            {getInitials(item.customer_name)}
-                        </span>
-                    </div>
                     <div className="flex flex-col">
                         <span className="text-sm font-medium text-foreground">
                             {item.customer_name}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                            {new Date(item.created_at).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                            })}
-                        </span>
+                        {/* Date — only rendered if it exists */}
+                        {dateLabel && (
+                            <span className="text-xs text-muted-foreground">
+                                {dateLabel}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>
@@ -128,11 +161,13 @@ const TestimonialCard = React.memo(({
 })
 TestimonialCard.displayName = "TestimonialCard"
 
+// ── TestimonialMarquee ────────────────────────────────────────────────────────
+
 export function TestimonialMarquee({
     items,
     variant = "default",
     className,
-    speed = 30,
+    speed = 80,
     containerClassName,
 }: TestimonialMarqueeProps) {
     const cnContainer = cn(containerClassName, className)
@@ -151,7 +186,7 @@ export function TestimonialMarquee({
             <MarqueeStyles />
 
             {variant === "dual" ? (
-                <div className={cn("flex flex-col gap-4 py-8 overflow-hidden", containerClassName)}>
+                <div className={cn("flex flex-col gap-2 py-4 overflow-hidden", containerClassName)}>
                     <MarqueeRow speed={speed} direction="left">
                         {itemsToDisplay.slice(0, half).map((item, i) => <TestimonialCard key={`row1-${i}`} item={item} />)}
                     </MarqueeRow>

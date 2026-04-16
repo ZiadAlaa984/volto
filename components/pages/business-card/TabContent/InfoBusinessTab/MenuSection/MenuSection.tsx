@@ -1,19 +1,17 @@
 "use client"
-import { useState } from 'react'
 import { Control } from 'react-hook-form'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { LinkIcon, UploadIcon } from 'lucide-react'
+import { Tabs, TabsContent } from '@/components/ui/tabs'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { InfoFormValues } from '@/lib/Schema/InfoBusiness'
 import FileUpload from '@/components/shared/FileUpload'
 
 interface MenuSectionProps {
     control: Control<InfoFormValues>
+    activeTab?: 'link' | 'upload'
 }
 
-function MenuSection({ control }: MenuSectionProps) {
-    const [tab, setTab] = useState<'link' | 'upload'>('link')
+function MenuSection({ control, activeTab }: MenuSectionProps) {
 
     return (
         <FormField
@@ -22,23 +20,8 @@ function MenuSection({ control }: MenuSectionProps) {
             render={({ field, fieldState }) => (
                 <FormItem>
                     <Tabs
-                        value={tab}
-                        onValueChange={v => {
-                            setTab(v as 'link' | 'upload')
-                            field.onChange(null) // reset value on tab switch
-                        }}
+                        value={activeTab}
                     >
-                        <TabsList className="w-full">
-                            <TabsTrigger value="link" className="flex-1 gap-2">
-                                <LinkIcon className="w-4 h-4" />
-                                Link
-                            </TabsTrigger>
-                            <TabsTrigger value="upload" className="flex-1 gap-2">
-                                <UploadIcon className="w-4 h-4" />
-                                Upload
-                            </TabsTrigger>
-                        </TabsList>
-
                         {/* ── Link tab ── */}
                         <TabsContent value="link" className="space-y-2 pt-2">
                             <FormLabel>Menu URL</FormLabel>
@@ -48,11 +31,6 @@ function MenuSection({ control }: MenuSectionProps) {
                                     placeholder="https://your-menu-link.com"
                                     value={typeof field.value === 'string' ? field.value : ''}
                                     onChange={e => field.onChange(e.target.value)}
-                                    className={
-                                        fieldState.isDirty && !fieldState.error && field.value
-                                            ? 'border-emerald-500 focus-visible:ring-emerald-500'
-                                            : ''
-                                    }
                                 />
                             </FormControl>
                             <p className="text-xs text-muted-foreground">

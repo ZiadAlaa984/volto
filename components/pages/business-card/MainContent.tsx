@@ -13,13 +13,16 @@ import { toastShared } from "@/lib/utils"
 export default function MainContent() {
     const router = useRouter()
     const { cardData, isLoadingCard } = useCard()
-    const { businessData, isLoading: isBusinessLoading, updateBusiness, isPending } = useBusinessInfo(cardData?.id)
+    const { businessData, isLoading: isBusinessLoading, updateBusiness, isPending } =
+        useBusinessInfo(cardData?.id, cardData)
 
-    const isLoading = isLoadingCard || isBusinessLoading
+    const isLoading = isLoadingCard || (!!cardData?.id && isBusinessLoading)
 
     useEffect(() => {
+        // ✅ Always wait for loading to finish first
         if (isLoading) return
 
+        // ✅ Only redirect after we're sure data isn't coming
         if (!businessData || !cardData) {
             toastShared({
                 title: "Business or Card not found",
@@ -30,12 +33,20 @@ export default function MainContent() {
         }
     }, [isLoading, businessData, cardData, router])
 
+    // ✅ All used values included in deps
     const tabs: GooeyTab[] = useMemo(() => [
         {
             slug: "info-card",
             title: "Info Business",
             icon: BriefcaseBusiness,
-            content: <InfoBusinessTab businessData={businessData!} isLoading={isLoading} updateBusiness={updateBusiness} isPending={isPending} />,
+            content: (
+                <InfoBusinessTab
+                    businessData={businessData!}
+                    isLoading={isLoading}
+                    updateBusiness={updateBusiness}
+                    isPending={isPending}
+                />
+            ),
         },
         {
             slug: "links",
@@ -43,7 +54,7 @@ export default function MainContent() {
             icon: MessageCircle,
             content: <ReviewsTab cardId={cardData?.id} />,
         },
-    ], [cardData?.id])
+    ], [cardData?.id, businessData, isLoading, updateBusiness, isPending])
 
     if (isLoading || !businessData || !cardData) return null
 

@@ -1,4 +1,4 @@
-import { Outfit, Geist_Mono, EB_Garamond } from "next/font/google";
+import { Outfit, Geist_Mono, EB_Garamond, Cairo } from "next/font/google";
 
 export const fontSans = Outfit({
     subsets: ["latin"],
@@ -8,6 +8,11 @@ export const fontSans = Outfit({
 export const fontMono = Geist_Mono({
     subsets: ["latin"],
     variable: "--font-mono",
+});
+
+export const cairo = Cairo({
+    subsets: ["latin"],
+    variable: "--font-cairo",
 });
 
 export const garamond = EB_Garamond({

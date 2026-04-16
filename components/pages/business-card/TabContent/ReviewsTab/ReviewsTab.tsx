@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import {
     Table,
     TableBody,
@@ -12,6 +13,7 @@ import {
 import {
     Pagination,
     PaginationContent,
+    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
@@ -22,13 +24,47 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useReviews } from '@/hooks/useReviews'
 import ReqStatus from '@/components/shared/ReqStatus'
 import AlertDialogShared from '@/components/shared/AlertDialogShared'
+import { formatDate } from '@/lib/utils'
+
+
+
+
+/**
+ * Builds a smart page-number list with ellipsis truncation.
+ * Always shows first, last, current ± 1, and ellipsis in between.
+ */
+function buildPageRange(current: number, total: number): (number | 'ellipsis-start' | 'ellipsis-end')[] {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+
+    const pages: (number | 'ellipsis-start' | 'ellipsis-end')[] = []
+    const showLeft = current > 3
+    const showRight = current < total - 2
+
+    pages.push(1)
+
+    if (showLeft) pages.push('ellipsis-start')
+
+    const start = Math.max(2, current - 1)
+    const end = Math.min(total - 1, current + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+
+    if (showRight) pages.push('ellipsis-end')
+
+    pages.push(total)
+    return pages
+}
+
+// ── Component ────────────────────────────────────────────────────────────────
 
 function ReviewsTab({ cardId }: { cardId: string | undefined }) {
     const [page, setPage] = useState(1)
-    const { reviewsData, isLoading, deleteReview, isPending, error } = useReviews(cardId, page, setPage);
+    const { reviewsData, isLoading, deleteReview, isPending, error } = useReviews(cardId, page, setPage)
+
     const reviews = reviewsData?.data ?? []
     const totalPages = reviewsData?.totalPages ?? 1
     const currentPage = reviewsData?.currentPage ?? 1
+
+    const pageRange = buildPageRange(currentPage, totalPages)
 
     return (
         <Card>
@@ -54,76 +90,95 @@ function ReviewsTab({ cardId }: { cardId: string | undefined }) {
                             colSpan={4}
                             emptyText="No reviews found"
                         >
-                            {reviews.map((review) => (
-                                <TableRow key={review.id}>
-                                    <TableCell>{review.customer_name}</TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-col gap-1 max-w-md">
-                                            <StarRating rating={review.rating} />
-                                            <p className="text-sm text-muted-foreground line-clamp-2">
-                                                {review.review_text}
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        {new Date(review.created_at).toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
-                                        })}
-                                    </TableCell>
-                                    <TableCell>
-                                        <AlertDialogShared
-                                            title="Delete Review"
-                                            description="Are you sure you want to delete this review?"
-                                            actionText="Delete"
-                                            disabled={isPending}
-                                            onClick={() => deleteReview(review.id)}
-                                        />
-                                    </TableCell>
-                                </TableRow>
-                            ))}
+                            {reviews.map((review) => {
+                                return (
+                                    <TableRow key={review.id}>
+                                        {/* Customer */}
+                                        <TableCell className='flex items-center gap-2'>
+                                            {review.customer_name}
+                                        </TableCell>
+
+                                        {/* Reviews: stars + text + thumbnails */}
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1 max-w-md">
+                                                <StarRating rating={review.rating} />
+                                                {review.review_text && (
+                                                    <p className="text-sm  line-clamp-2">
+                                                        {review.review_text}
+                                                    </p>
+                                                )}
+
+                                            </div>
+                                        </TableCell>
+
+                                        {/* Time — handles both timestamp and plain text */}
+                                        <TableCell>{formatDate(review.created_at)}</TableCell>
+
+                                        {/* Action */}
+                                        <TableCell>
+                                            <AlertDialogShared
+                                                title="Delete Review"
+                                                description="Are you sure you want to delete this review?"
+                                                actionText="Delete"
+                                                disabled={isPending}
+                                                onClick={() => deleteReview(review.id)}
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
                         </ReqStatus>
                     </TableBody>
                 </Table>
+
+                {/* Pagination with ellipsis */}
                 {totalPages > 1 && (
                     <Pagination className="mt-4">
                         <PaginationContent>
+                            {/* Previous */}
                             <PaginationItem>
                                 <PaginationPrevious
-
                                     onClick={(e) => {
                                         e.preventDefault()
                                         if (currentPage > 1) setPage(currentPage - 1)
                                     }}
-                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                                 />
                             </PaginationItem>
 
-                            {Array.from({ length: totalPages }).map((_, index) => {
-                                const pageNumber = index + 1
+                            {/* Page numbers with ellipsis */}
+                            {pageRange.map((item, idx) => {
+                                if (item === 'ellipsis-start' || item === 'ellipsis-end') {
+                                    return (
+                                        <PaginationItem key={item}>
+                                            <PaginationEllipsis />
+                                        </PaginationItem>
+                                    )
+                                }
                                 return (
-                                    <PaginationItem key={pageNumber}>
+                                    <PaginationItem key={item}>
                                         <PaginationLink
-                                            className='cursor-pointer'
-                                            isActive={pageNumber === currentPage}
+                                            className="cursor-pointer"
+                                            isActive={item === currentPage}
                                             onClick={(e) => {
                                                 e.preventDefault()
-                                                setPage(pageNumber)
+                                                setPage(item)
                                             }}
                                         >
-                                            {pageNumber}
+                                            {item}
                                         </PaginationLink>
                                     </PaginationItem>
                                 )
                             })}
 
+                            {/* Next */}
                             <PaginationItem>
                                 <PaginationNext
                                     onClick={(e) => {
                                         e.preventDefault()
                                         if (currentPage < totalPages) setPage(currentPage + 1)
                                     }}
-                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                                 />
                             </PaginationItem>
                         </PaginationContent>

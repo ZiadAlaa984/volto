@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
-import { fontSans, fontMono } from "@/lib/fonts";
+import { fontSans, fontMono, cairo } from "@/lib/fonts";
 import { ToasterClient } from "@/components/ToasterClient";
 import { AuthProvider } from "@/context/AuthContext";
 import { Suspense } from "react";
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
+      <body className={`${fontSans.variable} ${fontMono.variable} ${cairo.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -41,6 +41,13 @@ const LOCATION_TABS: { value: "address" | "google-map"; label: string }[] = [
     { value: "google-map", label: "Google Map" },
 ];
 
+// ─── Menu tab config ──────────────────────────────────────────────────────
+
+const MENU_TABS: { value: "upload" | "link"; label: string }[] = [
+    { value: "upload", label: "Upload" },
+    { value: "link", label: "Link" },
+];
+
 // ─── Section card ─────────────────────────────────────────────────────────────
 
 interface SectionConfig {
@@ -74,6 +81,7 @@ function InfoBusinessTab({
     isLoading,
 }: InfoBusinessTabProps) {
     const [locationTab, setLocationTab] = useState<"address" | "google-map">("address");
+    const [menuTab, setMenuTab] = useState<"upload" | "link">("upload");
 
     // ── Form ───────────────────────────────────────────────────────────────────
 
@@ -99,7 +107,6 @@ function InfoBusinessTab({
     async function onSubmit(values: InfoFormValues) {
         if (!businessData?.id) return;
 
-        console.log("🚀 ~ onSubmit ~ values:", values)
         await updateBusiness({
             id: businessData.id,
             data: {
@@ -165,7 +172,14 @@ function InfoBusinessTab({
         {
             title: "Menu",
             icon: <UtensilsIcon className="w-5 h-5 text-muted-foreground" />,
-            content: <MenuSection control={form.control} />,
+            content: <MenuSection activeTab={menuTab} control={form.control} />,
+            action: (
+                <FloatingTabs<"upload" | "link">
+                    tabs={MENU_TABS}
+                    defaultValue="upload"
+                    onChange={setMenuTab}
+                />
+            ),
         },
     ];
 

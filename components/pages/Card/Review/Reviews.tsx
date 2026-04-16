@@ -20,7 +20,7 @@ function Reviews({ reviews, cardId }: { reviews: Review[], cardId: string }) {
             card_id: cardId,
             rating: values.rating as 1 | 2 | 3 | 4 | 5
         })
-        router.refresh()  // re-fetches server data, shows new review
+        router.refresh()
     }
 
     return (
