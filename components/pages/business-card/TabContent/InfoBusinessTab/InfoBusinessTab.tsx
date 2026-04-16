@@ -17,31 +17,27 @@ import Loading from "@/app/loading";
 import { BusinessType } from "@/types/business";
 import { LocationSection } from "./LocationSection/LocationSection";
 
-
-// todo Menu, RLS business card, responsive
-// todo Card design
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface InfoBusinessTabProps {
     updateBusiness: (params: {
         id: string;
-        data: Partial<BusinessType> & { menu?: any };
-        currentMenu?: string | null;
+        data: Omit<Partial<BusinessType>, "menu"> & {
+            menu?: File | BusinessType["menu"]
+        };
+        currentMenu?: BusinessType["menu"];
     }) => Promise<void>;
     businessData: BusinessType;
     isPending: boolean;
     isLoading: boolean;
 }
 
-// ─── Location tab config ──────────────────────────────────────────────────────
+// ─── Tab configs ──────────────────────────────────────────────────────────────
 
 const LOCATION_TABS: { value: "address" | "google-map"; label: string }[] = [
     { value: "address", label: "Address" },
     { value: "google-map", label: "Google Map" },
 ];
-
-// ─── Menu tab config ──────────────────────────────────────────────────────
 
 const MENU_TABS: { value: "upload" | "link"; label: string }[] = [
     { value: "upload", label: "Upload" },
@@ -93,11 +89,12 @@ function InfoBusinessTab({
             menu: null,
             video_url: "",
         },
-        // Syncs automatically when businessData arrives from the API
+        // Syncs automatically when businessData arrives from the API.
+        // businessData.menu is already { type, value } | null — pass it straight through.
         values: {
             opening_hours: businessData?.opening_hours ?? DEFAULT_HOURS,
             locations: businessData?.locations ?? [],
-            menu: typeof businessData?.menu === "string" ? businessData.menu : null,
+            menu: businessData?.menu ?? null,
             video_url: businessData?.video_url ?? "",
         },
     });
@@ -112,9 +109,12 @@ function InfoBusinessTab({
             data: {
                 opening_hours: values.opening_hours,
                 locations: values.locations,
-                menu: values.menu as any,
+                menu: values.menu,
                 video_url: values.video_url || null,
+            } as Omit<Partial<BusinessType>, "menu"> & {
+                menu?: File | BusinessType["menu"]
             },
+            // Pass the full menu object — the hook will extract .value for deletion
             currentMenu: businessData.menu,
         });
     }
@@ -147,7 +147,6 @@ function InfoBusinessTab({
         {
             title: "Locations",
             icon: <MapPinIcon className="w-5 h-5 text-muted-foreground" />,
-            // FloatingTabs in the header drives the form inside LocationSection
             action: (
                 <FloatingTabs<"address" | "google-map">
                     tabs={LOCATION_TABS}
@@ -172,7 +171,6 @@ function InfoBusinessTab({
         {
             title: "Menu",
             icon: <UtensilsIcon className="w-5 h-5 text-muted-foreground" />,
-            content: <MenuSection activeTab={menuTab} control={form.control} />,
             action: (
                 <FloatingTabs<"upload" | "link">
                     tabs={MENU_TABS}
@@ -180,6 +178,7 @@ function InfoBusinessTab({
                     onChange={setMenuTab}
                 />
             ),
+            content: <MenuSection activeTab={menuTab} control={form.control} />,
         },
     ];
 

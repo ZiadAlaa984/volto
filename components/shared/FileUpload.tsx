@@ -1,11 +1,12 @@
 "use client"
 import { useRef } from 'react'
-import { FileTextIcon, ImageIcon, UploadIcon, XIcon } from 'lucide-react'
+import { ExternalLinkIcon, FileTextIcon, ImageIcon, UploadIcon, XIcon } from 'lucide-react'
 
 interface FileUploadProps {
-    accept: string       // e.g. "image/*,application/pdf"
+    accept: string
     maxSizeMB?: number
     value: File | null
+    savedUrl?: string           // existing uploaded-file URL from DB (type === "file")
     onChange: (file: File | null) => void
     error?: string
 }
@@ -21,7 +22,7 @@ function formatSize(bytes: number): string {
         : `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function FileUpload({ accept, maxSizeMB = 10, value, onChange, error }: FileUploadProps) {
+function FileUpload({ accept, maxSizeMB = 10, value, savedUrl, onChange, error }: FileUploadProps) {
     const inputRef = useRef<HTMLInputElement>(null)
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -30,7 +31,6 @@ function FileUpload({ accept, maxSizeMB = 10, value, onChange, error }: FileUplo
 
         if (file.size > maxSizeMB * 1024 * 1024) {
             onChange(null)
-            // reset input so same file can be re-selected after clearing
             if (inputRef.current) inputRef.current.value = ''
             return
         }
@@ -46,20 +46,20 @@ function FileUpload({ accept, maxSizeMB = 10, value, onChange, error }: FileUplo
         onChange(file)
     }
 
+    // ── Newly selected File (not yet saved) ────────────────────────────────
     if (value) {
         return (
-            <div className="flex items-center justify-between rounded-md border border-border px-3 py-2.5" >
-                <div className="flex items-center gap-2 min-w-0" >
+            <div className="flex items-center justify-between rounded-md border border-border px-3 py-2.5">
+                <div className="flex items-center gap-2 min-w-0">
                     {getFileIcon(value)}
-                    < div className="min-w-0" >
-                        <p className="text-sm truncate" > {value.name} </p>
-                        < p className="text-xs text-muted-foreground" > {formatSize(value.size)} </p>
+                    <div className="min-w-0">
+                        <p className="text-sm truncate">{value.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatSize(value.size)}</p>
                     </div>
                 </div>
-                < button
+                <button
                     type="button"
-                    onClick={() => { onChange(null); if (inputRef.current) inputRef.current.value = '' }
-                    }
+                    onClick={() => { onChange(null); if (inputRef.current) inputRef.current.value = '' }}
                     className="text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-2"
                 >
                     <XIcon className="w-4 h-4" />
@@ -68,22 +68,47 @@ function FileUpload({ accept, maxSizeMB = 10, value, onChange, error }: FileUplo
         )
     }
 
+    // ── Already-saved file URL from DB (type === "file") ───────────────────
+    if (savedUrl) {
+        return (
+            <div className="flex items-center justify-between rounded-md border border-border px-3 py-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                    <FileTextIcon className="w-4 h-4 text-muted-foreground" />
+                    <a
+                        href={savedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary underline underline-offset-2 truncate hover:opacity-80 flex items-center gap-1"
+                    >
+                        Uploaded file
+                        <ExternalLinkIcon className="w-3 h-3 shrink-0" />
+                    </a>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => onChange(null)}
+                    className="text-muted-foreground hover:text-destructive transition-colors shrink-0 ml-2"
+                >
+                    <XIcon className="w-4 h-4" />
+                </button>
+            </div>
+        )
+    }
+
+    // ── Empty dropzone ─────────────────────────────────────────────────────
     return (
-        <div className="space-y-1.5" >
+        <div className="space-y-1.5">
             <label
-                className={
-                    `flex flex-col items-center justify-center gap-2 border border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition-colors ${error ? 'border-destructive' : 'border-border'
-                    }`
-                }
+                className={`flex flex-col items-center justify-center gap-2 border border-dashed rounded-lg p-6 cursor-pointer hover:bg-muted/50 transition-colors ${error ? 'border-destructive' : 'border-border'}`}
                 onDragOver={e => e.preventDefault()}
                 onDrop={handleDrop}
             >
                 <UploadIcon className="w-5 h-5 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground" > Click or drag to upload </span>
-                < span className="text-xs text-muted-foreground" >
+                <span className="text-sm text-muted-foreground">Click or drag to upload</span>
+                <span className="text-xs text-muted-foreground">
                     {accept.replace('application/pdf', 'PDF').replace('image/*', 'Images')} · up to {maxSizeMB} MB
                 </span>
-                < input
+                <input
                     ref={inputRef}
                     type="file"
                     accept={accept}
@@ -91,7 +116,7 @@ function FileUpload({ accept, maxSizeMB = 10, value, onChange, error }: FileUplo
                     onChange={handleChange}
                 />
             </label>
-            {error && <p className="text-xs text-destructive" > {error} </p>}
+            {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
     )
 }

@@ -12,16 +12,14 @@ interface MenuSectionProps {
 }
 
 function MenuSection({ control, activeTab }: MenuSectionProps) {
-
     return (
         <FormField
             control={control}
             name="menu"
             render={({ field, fieldState }) => (
                 <FormItem>
-                    <Tabs
-                        value={activeTab}
-                    >
+                    <Tabs value={activeTab}>
+
                         {/* ── Link tab ── */}
                         <TabsContent value="link" className="space-y-2 pt-2">
                             <FormLabel>Menu URL</FormLabel>
@@ -29,8 +27,16 @@ function MenuSection({ control, activeTab }: MenuSectionProps) {
                                 <Input
                                     type="url"
                                     placeholder="https://your-menu-link.com"
-                                    value={typeof field.value === 'string' ? field.value : ''}
-                                    onChange={e => field.onChange(e.target.value)}
+                                    value={
+                                        field.value &&
+                                            !(field.value instanceof File) &&
+                                            field.value.type === "text"
+                                            ? field.value.value
+                                            : ""
+                                    }
+                                    onChange={e =>
+                                        field.onChange({ type: "text", value: e.target.value })
+                                    }
                                 />
                             </FormControl>
                             <p className="text-xs text-muted-foreground">
@@ -45,8 +51,17 @@ function MenuSection({ control, activeTab }: MenuSectionProps) {
                             <FileUpload
                                 accept="image/*,application/pdf"
                                 maxSizeMB={20}
+                                // A newly picked File object
                                 value={field.value instanceof File ? field.value : null}
-                                onChange={field.onChange}
+                                // An already-saved file URL from the DB
+                                savedUrl={
+                                    field.value &&
+                                        !(field.value instanceof File) &&
+                                        field.value.type === "file"
+                                        ? field.value.value
+                                        : undefined
+                                }
+                                onChange={file => field.onChange(file ?? null)}
                                 error={fieldState.error?.message}
                             />
                         </TabsContent>

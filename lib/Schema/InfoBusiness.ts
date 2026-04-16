@@ -24,14 +24,22 @@ export const locationSchema = z.object({
     title: z.string(),
     address: z.string().optional(),
     maps_url: z.string().optional(),
-    lat: z.string().optional(),   // extracted from maps URL for OpenStreetMap embed
+    lat: z.string().optional(),
     lng: z.string().optional(),
 })
+
+export const menuSchema = z.union([
+    z.object({
+        type: z.enum(["text", "file"]),
+        value: z.string(),
+    }),
+    z.instanceof(File),
+]).nullable()
 
 export const formSchema = z.object({
     opening_hours: openingHoursSchema,
     locations: z.array(locationSchema).max(3),
-    menu: z.union([z.string(), z.instanceof(File)]).nullable(),
+    menu: menuSchema,
     video_url: urlOrEmpty,
 })
 
@@ -40,6 +48,7 @@ export const formSchema = z.object({
 export type DayHours = z.infer<typeof dayHoursSchema>
 export type OpeningHours = z.infer<typeof openingHoursSchema>
 export type Location = z.infer<typeof locationSchema>
+export type MenuValue = z.infer<typeof menuSchema>
 export type InfoFormValues = z.infer<typeof formSchema>
 
 // ── Defaults ───────────────────────────────────────────────────────────────

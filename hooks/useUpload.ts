@@ -21,7 +21,7 @@ export function useUpload(defaultOptions: UploadOptions = {}) {
         options: UploadOptions = {}
     ): Promise<string | null> => {
         // No file = skip silently, caller gets null back
-        console.log("🚀 ~ useUpload ~ userId:", userId)
+        // console.log("🚀 ~ useUpload ~ userId:", userId)
         if (!file) return null;
         if (!userId) throw new Error("User not authenticated");
 

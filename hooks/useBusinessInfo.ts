@@ -47,7 +47,11 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
     // ─── Create ────────────────────────────────────────────────────────────
     const { isPending: isCreating, mutateAsync: createBusiness } = useMutation({
         mutationFn: async (data: Partial<BusinessType>) => {
-            await api.create(data)
+            if (!session?.user?.id) throw new Error("Not authenticated")
+            await api.create({
+                ...data,
+                user_id: session.user.id
+            })
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["business"] })
@@ -71,10 +75,11 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
             currentMenu,
         }: {
             id: string
-            data: Omit<Partial<BusinessType>, "menu"> & { menu?: File | string | null } // ← override menu type
-            currentMenu?: string | null
+            data: Omit<Partial<BusinessType>, "menu"> & {
+                menu?: File | BusinessType["menu"] | null
+            }
+            currentMenu?: BusinessType["menu"]
         }) => {
-            console.log("🚀 ~ useBusinessInfo ~ card_id:", card_id)
             if (!id || !card_id) return
 
             if (!isBusinessOwner) {
@@ -83,34 +88,82 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
 
             let updatedData: Partial<BusinessType> = {
                 ...data,
-                menu: data.menu instanceof File ? undefined : data.menu ?? undefined // temp, will be replaced below
+                menu: undefined,
             }
 
-            if (data.menu instanceof File) {
-                if (!ALLOWED_MENU_TYPES.includes(data.menu.type)) {
+            const isNewFile = data.menu instanceof File
+            const isText = data.menu && typeof data.menu === "object" && data.menu.type === "text"
+            const isExistingFile =
+                data.menu && typeof data.menu === "object" && data.menu.type === "file"
+
+            // ─────────────────────────────────────────────────────────────
+            // 🔴 Case 1: Upload new file
+            // ─────────────────────────────────────────────────────────────
+            if (isNewFile) {
+                if (!data.menu || !ALLOWED_MENU_TYPES.includes(data.menu.type)) {
                     throw new Error(
                         "Invalid file type. Only PDF, JPEG, PNG, WebP, and GIF are allowed."
                     )
                 }
 
-                if (currentMenu) await deleteFile(currentMenu, { bucket: "menu", folder: card_id })
+                // delete old file if exists
+                if (currentMenu?.type === "file") {
+                    await deleteFile(currentMenu.value, { bucket: "menus" })
+                }
 
+                const uploadedUrl = await uploadFile(data.menu as File, {
+                    bucket: "menus",
+                    folder: card_id,
+                })
 
-                updatedData.menu = await uploadFile(data.menu, { bucket: "menu", folder: card_id })
+                if (!uploadedUrl) {
+                    throw new Error("Failed to upload menu file")
+                }
 
-            } else if (data.menu === null) {
-                if (currentMenu) await deleteFile(currentMenu, { bucket: "menu", folder: card_id })
-                updatedData.menu = undefined // or null if your DB accepts it
-            } else {
-                updatedData.menu = data.menu // string URL unchanged
+                updatedData.menu = { type: "file", value: uploadedUrl }
+            }
+
+            // ─────────────────────────────────────────────────────────────
+            // 🔴 Case 2: Clear menu (null)
+            // ─────────────────────────────────────────────────────────────
+            else if (data.menu === null) {
+                if (currentMenu?.type === "file") {
+                    await deleteFile(currentMenu.value, { bucket: "menus" })
+                }
+
+                updatedData.menu = null
+            }
+
+            // ─────────────────────────────────────────────────────────────
+            // 🔴 Case 3: New TEXT (important fix here)
+            // ─────────────────────────────────────────────────────────────
+            else if (isText) {
+                // ✅ delete old file if existed
+                if (currentMenu?.type === "file") {
+                    await deleteFile(currentMenu.value, { bucket: "menus" })
+                }
+
+                updatedData.menu = {
+                    type: "text",
+                    value: (data.menu as { type: "text"; value: string }).value,
+                }
+            }
+
+            // ─────────────────────────────────────────────────────────────
+            // 🔴 Case 4: Keep existing file
+            // ─────────────────────────────────────────────────────────────
+            else if (isExistingFile) {
+                updatedData.menu = data.menu as { type: "text" | "file"; value: string }
             }
 
             await api.update(id, updatedData)
         },
+
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["business", card_id] })
             toastShared({ title: "Business info updated successfully" })
         },
+
         onError: errorToast,
     })
 
@@ -120,7 +173,7 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
         isPending: isUpdating || isCreating,
         businessData,
         isLoading: isLoadingBusiness,
-        isBusinessOwner, // expose so UI can conditionally show upload button
+        isBusinessOwner,
     }
 }
 

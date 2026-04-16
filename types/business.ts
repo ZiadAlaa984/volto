@@ -4,7 +4,10 @@ export type BusinessType = {
     id: string
     card_id: string;
     user_id: string;
-    menu: string | null          // always a URL string in DB, File only during form editing
+    menu: {
+        type: "text" | "file"
+        value: string
+    } | null,         // always a URL string in DB, File only during form editing
     video_url: string | null
     locations: Location[]
     opening_hours: OpeningHours | null
