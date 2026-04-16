@@ -14,6 +14,7 @@ import QrCodeModal from "./QrCodeModal";
 import { BusinessType, Review } from "@/types/business";
 import Locations from "./Locations";
 import Reviews from "./Review/Reviews";
+import { ReviewsResult } from "@/services/queries/getReviews";
 
 const cardVariant = {
     hidden: { opacity: 0, scale: 0.96, y: 24 },
@@ -25,7 +26,7 @@ const cardVariant = {
     },
 };
 
-export default function MainContent({ CardData, businessData, reviews }: { CardData: CardType; businessData: BusinessType | null; reviews: Review[] }) {
+export default function MainContent({ CardData, businessData, reviews }: { CardData: CardType; businessData: BusinessType | null; reviews: ReviewsResult }) {
     const [qrOpen, setQrOpen] = useState(false);
 
     const socialLinks = CardData?.links ?? [];

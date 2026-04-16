@@ -3,13 +3,13 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { TestimonialMarquee } from "@/components/ui/testimonial-marquee"
-import { Review } from "@/types/business"
 import { useReviews } from "@/hooks/useReviews"
 import { Button } from "@/components/ui/button"
 import { PenLine } from "lucide-react"
 import { ReviewFormDialog, ReviewFormValues } from "./ReviewFormDialog"
+import { ReviewsResult } from "@/services/queries/getReviews"
 
-function Reviews({ reviews, cardId }: { reviews: Review[], cardId: string }) {
+function Reviews({ reviews, cardId }: { reviews: ReviewsResult, cardId: string }) {
     const [open, setOpen] = useState(false)
     const router = useRouter()
     const { createReview, isPending } = useReviews(cardId)
@@ -25,8 +25,20 @@ function Reviews({ reviews, cardId }: { reviews: Review[], cardId: string }) {
 
     return (
         <div className="flex flex-col w-full gap-6">
-            {reviews.length > 0
-                ? <TestimonialMarquee items={reviews} />
+            {reviews.reviews.length > 0
+                ? <>
+                    <div>
+                        <h2 className="text-xl font-semibold">
+                            Reviews
+                        </h2>
+                        <div>
+                            <span>
+                                {reviews.averageRating.toFixed(1)} ({reviews.count} reviews)
+                            </span>
+                        </div>
+                    </div>
+                    <TestimonialMarquee items={reviews.reviews} />
+                </>
                 : (
                     <p className="text-center text-sm text-muted-foreground py-8">
                         No reviews yet. Be the first!

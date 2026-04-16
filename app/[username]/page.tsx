@@ -1,7 +1,7 @@
 import MainContent from "@/components/pages/Card/MainContent";
 import { getBusinessInfo } from "@/services/queries/getBusinessInfo";
 import { getCardByUsername } from "@/services/queries/getCardByUsername";
-import { getReviews } from "@/services/queries/getReviews";
+import { getReviews, ReviewsResult } from "@/services/queries/getReviews";
 import { BusinessType } from "@/types/business";
 
 export default async function Page({ params }: { params: { username: string } }) {
@@ -9,7 +9,7 @@ export default async function Page({ params }: { params: { username: string } })
   const cardData = await getCardByUsername(username)
 
   let businessData: BusinessType | null = null;
-  let reviews = [];
+  let reviews: ReviewsResult = { reviews: [], totalStars: 0, count: 0, averageRating: 0 };
 
   if (cardData?.card_type === 'business') {
     // fetch in parallel ← faster
@@ -24,7 +24,7 @@ export default async function Page({ params }: { params: { username: string } })
       <MainContent
         CardData={cardData}
         businessData={businessData || null}
-        reviews={reviews}    // ← pass down
+        reviews={reviews}    // ← pass down   
       />
     </div>
   )
