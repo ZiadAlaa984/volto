@@ -69,7 +69,7 @@ export const SOCIAL_PLATFORMS_GROUPED: SocialPlatformGroup[] = [
   {
     group: "Messaging",
     platforms: [
-      { key: "whatsapp", label: "WhatsApp", icon: "MessageCircle", placeholder: "https://wa.me/phonenumber" },
+      { key: "whatsapp", label: "WhatsApp", icon: "MessageCircle", placeholder: "https://wa.me/1234567890 or +1234567890" },
       { key: "telegram", label: "Telegram", icon: "Send", placeholder: "https://t.me/username" },
       { key: "discord", label: "Discord", icon: "Headphones", placeholder: "https://discord.gg/invitecode" },
       { key: "signal", label: "Signal", icon: "ShieldCheck", placeholder: "https://signal.me/#p/username" },
@@ -88,9 +88,10 @@ export const SOCIAL_PLATFORMS_GROUPED: SocialPlatformGroup[] = [
   {
     group: "Other",
     platforms: [
-      { key: "website", label: "Website", icon: "Globe", placeholder: "https://yourwebsite.com" },
-      { key: "email", label: "Email", icon: "Mail", placeholder: "mailto:you@example.com" },
-      { key: "phone", label: "Phone", icon: "Phone", placeholder: "tel:+1234567890" },
+      // In SOCIAL_PLATFORMS_GROUPED, "Other" group:
+      { key: "email", label: "Email", icon: "Mail", placeholder: "you@example.com or mailto:you@example.com" },
+      { key: "phone", label: "Phone", icon: "Phone", placeholder: "+1234567890 or tel:+1234567890" },
+      // In "Messaging" group:
       { key: "other", label: "Other", icon: "Link", placeholder: "https://..." },
     ],
   },
@@ -119,15 +120,56 @@ export const SOCIAL_KEYS: string[] = [
 
 // ── Schema ────────────────────────────────────────────────────────────────────
 
+// ── Helpers for URL validation ────────────────────────────────────────────────
+
+const EMAIL_KEYS = ["email"];
+const PHONE_KEYS = ["phone", "whatsapp"];
+
 export const linkItemSchema = z.object({
   id: z.string().optional(),
   card_id: z.string().optional(),
   order_num: z.number().optional(),
   platform: z.string().min(1),
   title: z.string().max(48, "Title must be at most 48 characters"),
-  url: z.string().min(1, "URL is required").url("Must be a valid URL (include https://)"),
-});
+  url: z.string().min(1, "Required"),
+}).superRefine((data, ctx) => {
+  const { platform, url } = data;
 
+  if (EMAIL_KEYS.includes(platform)) {
+    // Accept "mailto:you@example.com" or plain "you@example.com"
+    const email = url.startsWith("mailto:") ? url.slice(7) : url;
+    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["url"],
+        message: "Must be a valid email address",
+      });
+    }
+  } else if (PHONE_KEYS.includes(platform)) {
+    // Accept "tel:+123..." / "https://wa.me/..." or plain digits/+
+    const isTel = /^tel:\+?[\d\s\-().]+$/.test(url);
+    const isWaMe = /^https:\/\/wa\.me\/\d+/.test(url);
+    const isPlain = /^\+?[\d\s\-().]{7,}$/.test(url);
+    if (!isTel && !isWaMe && !isPlain) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["url"],
+        message: "Must be a valid phone number or wa.me link",
+      });
+    }
+  } else {
+    // All other platforms: must be a valid https URL
+    const result = z.string().url("Must be a valid URL (include https://)").safeParse(url);
+    if (!result.success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["url"],
+        message: "Must be a valid URL (include https://)",
+      });
+    }
+  }
+});
 export const linksFormSchema = z.object({
   links: z.array(linkItemSchema).min(1, "Add at least one link"),
 });

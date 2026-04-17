@@ -42,6 +42,8 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
+      console.log("login successfully");
+
       // Update this route to redirect to an authenticated route. The user already has an active session.
       router.push(Router.ONBOARDING);
     } catch (error: unknown) {
