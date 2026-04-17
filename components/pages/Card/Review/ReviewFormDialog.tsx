@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils"
 const reviewSchema = z.object({
     customer_name: z.string().min(2, "Name must be at least 2 characters"),
     rating: z.number().min(1, "Please select a rating").max(5),
-    review_text: z.string().min(10, "Review must be at least 10 characters").max(500, "Review must be under 500 characters"),
+    review_text: z.string().min(4, "Review must be at least 4 characters").max(500, "Review must be under 500 characters"),
 })
 
 export type ReviewFormValues = z.infer<typeof reviewSchema>

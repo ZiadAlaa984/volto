@@ -1,13 +1,19 @@
 import { Location } from "@/lib/Schema/InfoBusiness"
 
+// types/business.ts  (only the menu line changes)
+
+// types/business.ts
+export type MenuItemType = {
+    type: "text" | "file"
+    value: string
+    label?: string
+}
+
 export type BusinessType = {
     id: string
     card_id: string;
     user_id: string;
-    menu: {
-        type: "text" | "file"
-        value: string
-    } | null,         // always a URL string in DB, File only during form editing
+    menu: MenuItemType[] | null   // ← was single object | null
     video_url: string | null
     locations: Location[]
     opening_hours: OpeningHours | null

@@ -11,6 +11,7 @@ import Router from "@/lib/route"
 import { toastShared } from "@/lib/utils"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import Loading from "@/app/loading"
 
 export default function MainContent() {
     const router = useRouter()
@@ -18,24 +19,9 @@ export default function MainContent() {
     const { businessData, isLoading: isBusinessLoading, updateBusiness, isPending, isTogglingReviews, toggleActiveReviews } =
         useBusinessInfo(cardData?.id, cardData)
 
-    const isLoading = isLoadingCard || (!!cardData?.id && isBusinessLoading)
+    const isLoading = isLoadingCard || isBusinessLoading || cardData === undefined
 
-    useEffect(() => {
-        // ✅ Always wait for loading to finish first
-        if (isLoading) return
-
-        // ✅ Only redirect after we're sure data isn't coming
-        if (!businessData || !cardData) {
-            toastShared({
-                title: "Business or Card not found",
-                description: "Please check your business or card data",
-                variant: "error",
-            })
-            router.push(Router.DASHBOARD.home)
-        }
-    }, [isLoading, businessData, cardData, router])
-
-    // ✅ All used values included in deps
+    // ✅ useMemo BEFORE any early returns
     const tabs: GooeyTab[] = useMemo(() => [
         {
             slug: "info-card",
@@ -55,7 +41,7 @@ export default function MainContent() {
             title: "Reviews",
             icon: MessageCircle,
             content: (
-                <div>
+                <div className="flex flex-col gap-4">
                     <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-2">
                             <Switch
@@ -67,17 +53,33 @@ export default function MainContent() {
                             <Label htmlFor="reviews">Active Reviews</Label>
                         </div>
                     </div>
-                    {
-                        businessData?.active_reviews && (
-                            <ReviewsTab activeReviews={businessData?.active_reviews ?? false} cardId={cardData?.id} />
-                        )
-                    }
+                    {businessData?.active_reviews && (
+                        <ReviewsTab
+                            activeReviews={businessData?.active_reviews ?? false}
+                            cardId={cardData?.id}
+                        />
+                    )}
                 </div>
             ),
         },
     ], [cardData?.id, businessData, isLoading, updateBusiness, isPending, isTogglingReviews, toggleActiveReviews])
 
-    if (isLoading || !businessData || !cardData) return null
+    useEffect(() => {
+        if (isLoading) return
+
+        if (!businessData || !cardData) {
+            toastShared({
+                title: "Business or Card not found",
+                description: "Please check your business or card data",
+                variant: "error",
+            })
+            router.push(Router.DASHBOARD.home)
+        }
+    }, [isLoading, businessData, cardData, router])
+
+    // ✅ Early returns AFTER all hooks
+    if (isLoading) return <Loading />
+    if (!businessData || !cardData) return null
 
     return <GooeyTabs tabs={tabs} contentPadding="p-4 md:p-12" />
 }

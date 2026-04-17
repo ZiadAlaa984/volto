@@ -12,7 +12,7 @@ import { HourglassIcon, MapPinIcon, UtensilsIcon, VideoIcon } from "lucide-react
 import OpenHoursEditor, { OpenHoursBadge } from "./OpenHours/OpenHoursEditor";
 import MenuSection from "./MenuSection/MenuSection";
 import VideoSection from "./VideoSection/VideoSection";
-import { DEFAULT_HOURS, formSchema, InfoFormValues } from "@/lib/Schema/InfoBusiness";
+import { DEFAULT_HOURS, formSchema, InfoFormValues, MenuItemValue } from "@/lib/Schema/InfoBusiness";
 import Loading from "@/app/loading";
 import { BusinessType } from "@/types/business";
 import { LocationSection } from "./LocationSection/LocationSection";
@@ -23,7 +23,7 @@ interface InfoBusinessTabProps {
     updateBusiness: (params: {
         id: string;
         data: Omit<Partial<BusinessType>, "menu"> & {
-            menu?: File | BusinessType["menu"]
+            menu?: MenuItemValue[]
         };
         currentMenu?: BusinessType["menu"];
     }) => Promise<void>;
@@ -86,7 +86,7 @@ function InfoBusinessTab({
         defaultValues: {
             opening_hours: DEFAULT_HOURS,
             locations: [],
-            menu: null,
+            menu: [],
             video_url: "",
         },
         // Syncs automatically when businessData arrives from the API.
@@ -94,7 +94,11 @@ function InfoBusinessTab({
         values: {
             opening_hours: businessData?.opening_hours ?? DEFAULT_HOURS,
             locations: businessData?.locations ?? [],
-            menu: businessData?.menu ?? null,
+            menu: (businessData?.menu ?? []).map(item => ({
+                label: item.label ?? "",
+                content: { type: item.type, value: item.value },
+                activeTab: item.type === "text" ? "link" : "upload",
+            } satisfies MenuItemValue)),
             video_url: businessData?.video_url ?? "",
         },
     });
@@ -102,7 +106,7 @@ function InfoBusinessTab({
     // ── Submit ─────────────────────────────────────────────────────────────────
 
     async function onSubmit(values: InfoFormValues) {
-        if (!businessData?.id) return;
+        if (!businessData?.id) return
 
         await updateBusiness({
             id: businessData.id,
@@ -111,12 +115,9 @@ function InfoBusinessTab({
                 locations: values.locations,
                 menu: values.menu,
                 video_url: values.video_url || null,
-            } as Omit<Partial<BusinessType>, "menu"> & {
-                menu?: File | BusinessType["menu"]
-            },
-            // Pass the full menu object — the hook will extract .value for deletion
+            } as Omit<Partial<BusinessType>, "menu"> & { menu?: MenuItemValue[] },
             currentMenu: businessData.menu,
-        });
+        })
     }
 
     // ── Sections config ────────────────────────────────────────────────────────
@@ -178,7 +179,7 @@ function InfoBusinessTab({
                     onChange={setMenuTab}
                 />
             ),
-            content: <MenuSection activeTab={menuTab} control={form.control} />,
+            content: <MenuSection control={form.control} />,
         },
     ];
 

@@ -16,18 +16,13 @@ import { catchAsync, toastShared, sanitizeSlug } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
 import { fadeInUp } from "@/lib/Animation/stepVariants";
 import { UserNameFormValues, userNameSchema } from "@/lib/Schema/userNameSchema";
-import { useEffect, useState } from "react";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function SlugStep({ formData, onNext, onBack }: StepProps) {
   const { checkUsername, isPending } = useProfile();
-  const [origin, setOrigin] = useState("");
   // ✅ in SlugStep.tsx
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
   const form = useForm<UserNameFormValues>({
     resolver: zodResolver(userNameSchema),
     defaultValues: { user_name: formData.user_name ?? "" },
@@ -81,9 +76,6 @@ export function SlugStep({ formData, onNext, onBack }: StepProps) {
                   <FormItem>
                     <FormLabel>Username</FormLabel>
                     <div className="flex items-center md:flex-nowrap flex-wrap gap-2">
-                      <span className="text-muted-foreground text-sm shrink-0">
-                        {origin}/
-                      </span>
                       <FormControl>
                         <Input
                           placeholder="ziad-alaa"

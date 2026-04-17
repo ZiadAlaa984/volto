@@ -22,10 +22,16 @@ function Page() {
     const isPending = isCardPending || isBusinessPending
 
     const handleClick = catchAsync(async () => {
-        if (!cardData?.id) {
+        if (!cardData) {
+            toastShared({ title: "Create a card first", variant: "error" })
+            return
+        }
+
+        if (!cardData.id) {
             toastShared({ title: "Card ID is required", variant: "error" })
             return
         }
+
 
         // Already has business — just navigate
         if (businessData) {
@@ -45,7 +51,6 @@ function Page() {
         })
     })
 
-    if (!cardData) return null
 
     return (
         <div className="min-h-screen flex flex-col gap-6">

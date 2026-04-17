@@ -1,13 +1,15 @@
+// hooks/useBusinessInfo.ts
 "use client"
 import { useAuth } from "@/context/AuthContext"
 import { errorToast, toastShared } from "@/lib/utils"
 import { createBuinessApi } from "@/services/instances/BusinessApi"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useUpload } from "./useUpload"
-import { BusinessType } from "@/types/business"
+import { BusinessType, MenuItemType } from "@/types/business"
 import { useRouter } from "next/navigation"
 import Router from "@/lib/route"
 import { CardType } from "@/types/onboarding"
+import { MenuItemValue } from "@/lib/Schema/InfoBusiness"
 
 const ALLOWED_MENU_TYPES = [
     "application/pdf",
@@ -24,7 +26,6 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
     const api = createBuinessApi(session)
     const router = useRouter()
 
-    // ─── Guard: JS-level ownership + card_type check ───────────────────────
     const isBusinessOwner =
         !!cardData &&
         cardData.card_type === "business" &&
@@ -48,10 +49,7 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
     const { isPending: isCreating, mutateAsync: createBusiness } = useMutation({
         mutationFn: async (data: Partial<BusinessType>) => {
             if (!session?.user?.id) throw new Error("Not authenticated")
-            await api.create({
-                ...data,
-                user_id: session.user.id
-            })
+            await api.create({ ...data, user_id: session.user.id })
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["business"] })
@@ -62,9 +60,7 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
             })
             router.push(Router.DASHBOARD.businessCard)
         },
-        onError: (error) => {
-            errorToast(error as Error)
-        },
+        onError: (error) => errorToast(error as Error),
     })
 
     // ─── Update ────────────────────────────────────────────────────────────
@@ -76,97 +72,77 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
         }: {
             id: string
             data: Omit<Partial<BusinessType>, "menu"> & {
-                menu?: File | BusinessType["menu"] | null
+                menu?: MenuItemValue[]   // form values (may contain File objects)
             }
-            currentMenu?: BusinessType["menu"]
+            currentMenu?: BusinessType["menu"]  // saved DB rows (all { type, value })
         }) => {
             if (!id || !card_id) return
+            if (!isBusinessOwner) throw new Error("Only the business card owner can update this.")
 
-            if (!isBusinessOwner) {
-                throw new Error("Only the business card owner can update this.")
+            // ── Normalize current (DB) menu to a safe array ────────────────
+            const oldItems: MenuItemType[] = currentMenu ?? []
+
+            // ── Process each incoming item ─────────────────────────────────
+            const resolvedMenu: MenuItemType[] = []
+
+            // Inside mutationFn, replace the loop:
+
+            for (const item of data.menu ?? []) {
+                const content = item.content
+
+                // 🔴 New File upload
+                if (content instanceof File) {
+                    if (!ALLOWED_MENU_TYPES.includes(content.type)) {
+                        throw new Error("Invalid file type. Only PDF, JPEG, PNG, WebP, and GIF are allowed.")
+                    }
+                    const uploadedUrl = await uploadFile(content, {
+                        bucket: "menus",
+                        folder: card_id,
+                    })
+                    if (!uploadedUrl) throw new Error("Failed to upload menu file")
+                    resolvedMenu.push({
+                        type: "file",
+                        value: uploadedUrl,
+                        label: item.label || undefined,
+                    })
+                }
+
+                // 🔴 Text link or already-saved file — keep as-is
+                else if (content && typeof content === "object") {
+                    resolvedMenu.push({
+                        ...content,
+                        label: item.label || undefined,
+                    })
+                }
+
+                // 🔴 null content — skip (don't save empty rows)
             }
 
-            let updatedData: Partial<BusinessType> = {
+            // ── Delete any old FILE items that are no longer in the new list ──
+            const newFileUrls = new Set(
+                resolvedMenu
+                    .filter(i => i.type === "file")
+                    .map(i => i.value)
+            )
+
+            for (const old of oldItems) {
+                if (old.type === "file" && !newFileUrls.has(old.value)) {
+                    await deleteFile(old.value, { bucket: "menus" })
+                }
+            }
+
+            await api.update(id, {
                 ...data,
-                menu: undefined,
-            }
-
-            const isNewFile = data.menu instanceof File
-            const isText = data.menu && typeof data.menu === "object" && data.menu.type === "text"
-            const isExistingFile =
-                data.menu && typeof data.menu === "object" && data.menu.type === "file"
-
-            // ─────────────────────────────────────────────────────────────
-            // 🔴 Case 1: Upload new file
-            // ─────────────────────────────────────────────────────────────
-            if (isNewFile) {
-                if (!data.menu || !ALLOWED_MENU_TYPES.includes(data.menu.type)) {
-                    throw new Error(
-                        "Invalid file type. Only PDF, JPEG, PNG, WebP, and GIF are allowed."
-                    )
-                }
-
-                // delete old file if exists
-                if (currentMenu?.type === "file") {
-                    await deleteFile(currentMenu.value, { bucket: "menus" })
-                }
-
-                const uploadedUrl = await uploadFile(data.menu as File, {
-                    bucket: "menus",
-                    folder: card_id,
-                })
-
-                if (!uploadedUrl) {
-                    throw new Error("Failed to upload menu file")
-                }
-
-                updatedData.menu = { type: "file", value: uploadedUrl }
-            }
-
-            // ─────────────────────────────────────────────────────────────
-            // 🔴 Case 2: Clear menu (null)
-            // ─────────────────────────────────────────────────────────────
-            else if (data.menu === null) {
-                if (currentMenu?.type === "file") {
-                    await deleteFile(currentMenu.value, { bucket: "menus" })
-                }
-
-                updatedData.menu = null
-            }
-
-            // ─────────────────────────────────────────────────────────────
-            // 🔴 Case 3: New TEXT (important fix here)
-            // ─────────────────────────────────────────────────────────────
-            else if (isText) {
-                // ✅ delete old file if existed
-                if (currentMenu?.type === "file") {
-                    await deleteFile(currentMenu.value, { bucket: "menus" })
-                }
-
-                updatedData.menu = {
-                    type: "text",
-                    value: (data.menu as { type: "text"; value: string }).value,
-                }
-            }
-
-            // ─────────────────────────────────────────────────────────────
-            // 🔴 Case 4: Keep existing file
-            // ─────────────────────────────────────────────────────────────
-            else if (isExistingFile) {
-                updatedData.menu = data.menu as { type: "text" | "file"; value: string }
-            }
-
-            await api.update(id, updatedData)
+                menu: resolvedMenu.length > 0 ? resolvedMenu : null,
+            })
         },
 
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["business", card_id] })
             toastShared({ title: "Business info updated successfully" })
         },
-
         onError: errorToast,
     })
-
 
     // ─── Toggle Active Reviews ─────────────────────────────────────────────
     const { isPending: isTogglingReviews, mutateAsync: toggleActiveReviews } = useMutation({
@@ -186,9 +162,7 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
         onError: errorToast,
     })
 
-
     return {
-
         createBusiness,
         updateBusiness,
         toggleActiveReviews,

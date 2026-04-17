@@ -26,7 +26,7 @@ const cardVariant = {
     },
 };
 
-export default function MainContent({ CardData, businessData, reviews }: { CardData: CardType; businessData: BusinessType | null; reviews: ReviewsResult }) {
+export default function MainContent({ CardData, businessData, reviews }: { CardData: CardType; businessData: BusinessType | null; reviews: ReviewsResult | null }) {
     const [qrOpen, setQrOpen] = useState(false);
 
     const socialLinks = CardData?.links ?? [];
@@ -56,7 +56,7 @@ export default function MainContent({ CardData, businessData, reviews }: { CardD
                         <CardFooter />
                     </div>
                     {
-                        businessData?.active_reviews && (
+                        businessData?.active_reviews && reviews && (
                             <Reviews activeReviews={businessData?.active_reviews ?? false} reviews={reviews} cardId={CardData?.id ?? ""} />
                         )
                     }
