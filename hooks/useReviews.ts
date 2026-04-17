@@ -8,7 +8,17 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 type NewReviewItem = Omit<Review, "id" | "created_at">;
 
-export function useReviews(cardId?: string, page: number = 1, onPageChange?: (page: number) => void) {
+export function useReviews({
+    cardId,
+    page = 1,
+    onPageChange,
+    activeReviews,
+}: {
+    cardId?: string;
+    page?: number;
+    onPageChange?: (page: number) => void;
+    activeReviews?: boolean;
+}) {
     const { session } = useAuth();
     const api = createReviewsApi(session);
     const queryClient = useQueryClient();
@@ -18,6 +28,7 @@ export function useReviews(cardId?: string, page: number = 1, onPageChange?: (pa
         queryKey: ["reviews", cardId, page],
         enabled: !!cardId,
         queryFn: catchAsync(async () => {
+            if (!activeReviews) throw new Error("Reviews are disabled for this business") // 👈 UX guard only, RLS is the real block
             return api.getAll({
                 filters: { card_id: cardId } as any,
                 skipUserFilter: true,
@@ -34,6 +45,7 @@ export function useReviews(cardId?: string, page: number = 1, onPageChange?: (pa
         error: createReviewError,
     } = useMutation({
         mutationFn: catchAsync(async (review: NewReviewItem) => {
+            if (!activeReviews) throw new Error("Reviews are disabled for this business") // 👈 UX guard only, RLS is the real block
             return api.create(review);
         }),
         onSuccess: () => {
@@ -54,12 +66,12 @@ export function useReviews(cardId?: string, page: number = 1, onPageChange?: (pa
         error: deleteReviewError,
     } = useMutation({
         mutationFn: catchAsync(async (reviewId: string) => {
+            if (!activeReviews) throw new Error("Reviews are disabled for this business") // 👈 UX guard only, RLS is the real block
             return api.delete(reviewId);
         }),
         onSuccess: () => {
             const currentData = queryClient.getQueryData<typeof reviewsData>(["reviews", cardId, page]);
             const itemsOnPage = currentData?.data?.length ?? 0;
-
             if (itemsOnPage <= 1 && page > 1) {
                 onPageChange?.(page - 1);
             }

@@ -55,7 +55,11 @@ export default function MainContent({ CardData, businessData, reviews }: { CardD
                         <QrCodeTrigger onOpen={() => setQrOpen(true)} />
                         <CardFooter />
                     </div>
-                    <Reviews reviews={reviews} cardId={CardData?.id ?? ""} />
+                    {
+                        businessData?.active_reviews && (
+                            <Reviews activeReviews={businessData?.active_reviews ?? false} reviews={reviews} cardId={CardData?.id ?? ""} />
+                        )
+                    }
                 </Card>
             </motion.div>
 

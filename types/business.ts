@@ -14,6 +14,7 @@ export type BusinessType = {
     renewal_day: number
     status: 'active' | 'pending' | 'expired'
     created_at: string
+    active_reviews: boolean
 }
 
 export type Review = {

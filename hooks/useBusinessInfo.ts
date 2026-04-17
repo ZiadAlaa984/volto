@@ -167,9 +167,32 @@ const useBusinessInfo = (card_id?: string, cardData?: CardType) => {
         onError: errorToast,
     })
 
+
+    // ─── Toggle Active Reviews ─────────────────────────────────────────────
+    const { isPending: isTogglingReviews, mutateAsync: toggleActiveReviews } = useMutation({
+        mutationFn: async (active_reviews: boolean) => {
+            if (!businessData?.id || !card_id) throw new Error("Business not found")
+            if (!isBusinessOwner) throw new Error("Only the business owner can toggle reviews.")
+            await api.update(businessData.id, { active_reviews })
+        },
+        onSuccess: (_, active_reviews) => {
+            queryClient.invalidateQueries({ queryKey: ["business", card_id] })
+            queryClient.invalidateQueries({ queryKey: ["reviews", card_id] })
+            toastShared({
+                title: active_reviews ? "Reviews activated" : "Reviews deactivated",
+                variant: "success",
+            })
+        },
+        onError: errorToast,
+    })
+
+
     return {
+
         createBusiness,
         updateBusiness,
+        toggleActiveReviews,
+        isTogglingReviews,
         isPending: isUpdating || isCreating,
         businessData,
         isLoading: isLoadingBusiness,

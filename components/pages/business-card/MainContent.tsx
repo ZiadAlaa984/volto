@@ -9,11 +9,13 @@ import { useCard } from "@/hooks/useCard"
 import useBusinessInfo from "@/hooks/useBusinessInfo"
 import Router from "@/lib/route"
 import { toastShared } from "@/lib/utils"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 export default function MainContent() {
     const router = useRouter()
     const { cardData, isLoadingCard } = useCard()
-    const { businessData, isLoading: isBusinessLoading, updateBusiness, isPending } =
+    const { businessData, isLoading: isBusinessLoading, updateBusiness, isPending, isTogglingReviews, toggleActiveReviews } =
         useBusinessInfo(cardData?.id, cardData)
 
     const isLoading = isLoadingCard || (!!cardData?.id && isBusinessLoading)
@@ -52,9 +54,28 @@ export default function MainContent() {
             slug: "links",
             title: "Reviews",
             icon: MessageCircle,
-            content: <ReviewsTab cardId={cardData?.id} />,
+            content: (
+                <div>
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                id="reviews"
+                                checked={businessData?.active_reviews ?? false}
+                                disabled={isTogglingReviews}
+                                onCheckedChange={(checked) => toggleActiveReviews(checked)}
+                            />
+                            <Label htmlFor="reviews">Active Reviews</Label>
+                        </div>
+                    </div>
+                    {
+                        businessData?.active_reviews && (
+                            <ReviewsTab activeReviews={businessData?.active_reviews ?? false} cardId={cardData?.id} />
+                        )
+                    }
+                </div>
+            ),
         },
-    ], [cardData?.id, businessData, isLoading, updateBusiness, isPending])
+    ], [cardData?.id, businessData, isLoading, updateBusiness, isPending, isTogglingReviews, toggleActiveReviews])
 
     if (isLoading || !businessData || !cardData) return null
 

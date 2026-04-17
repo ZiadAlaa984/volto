@@ -56,9 +56,9 @@ function buildPageRange(current: number, total: number): (number | 'ellipsis-sta
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-function ReviewsTab({ cardId }: { cardId: string | undefined }) {
+function ReviewsTab({ activeReviews, cardId }: { activeReviews: boolean, cardId: string | undefined }) {
     const [page, setPage] = useState(1)
-    const { reviewsData, isLoading, deleteReview, isPending, error } = useReviews(cardId, page, setPage)
+    const { reviewsData, isLoading, deleteReview, isPending, error } = useReviews({ cardId, page, onPageChange: setPage, activeReviews })
 
     const reviews = reviewsData?.data ?? []
     const totalPages = reviewsData?.totalPages ?? 1

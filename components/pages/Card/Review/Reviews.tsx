@@ -9,10 +9,13 @@ import { PenLine } from "lucide-react"
 import { ReviewFormDialog, ReviewFormValues } from "./ReviewFormDialog"
 import { ReviewsResult } from "@/services/queries/getReviews"
 
-function Reviews({ reviews, cardId }: { reviews: ReviewsResult, cardId: string }) {
+function Reviews({ reviews, cardId, activeReviews }: { reviews: ReviewsResult, cardId: string, activeReviews: boolean }) {
     const [open, setOpen] = useState(false)
     const router = useRouter()
-    const { createReview, isPending } = useReviews(cardId)
+    const { createReview, isPending } = useReviews({
+        cardId,
+        activeReviews: activeReviews
+    })
 
     const handleSubmit = async (values: ReviewFormValues) => {
         await createReview({
