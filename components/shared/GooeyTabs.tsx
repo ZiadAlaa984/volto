@@ -16,11 +16,11 @@ export interface GooeyTab {
 
 interface GooeyTabsProps {
     tabs: GooeyTab[]
-    /** Extra padding inside the content panel. Defaults to "p-8 md:p-12" */
+    /** Extra padding inside the content panel. Defaults to "p-4 md:p-12" */
     contentPadding?: string
 }
 
-export default function GooeyTabs({ tabs, contentPadding = "p-8 md:p-12" }: GooeyTabsProps) {
+export default function GooeyTabs({ tabs, contentPadding = "p-4 md:p-12" }: GooeyTabsProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
@@ -77,7 +77,7 @@ export default function GooeyTabs({ tabs, contentPadding = "p-8 md:p-12" }: Gooe
                                     transition={{ duration: 0.2, ease: "easeOut" }}
                                     className={`${contentPadding} bg-card`}
                                 >
-                                    <div className="space-y-2 mt-4 sm:mt-8 md:mt-8">
+                                    <div className="space-y-2 mt-4 sm:mt-8 md:mt-8 py-6">
                                         {tabs[resolvedTab].content}
                                     </div>
                                 </motion.div>

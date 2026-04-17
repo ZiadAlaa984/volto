@@ -81,7 +81,7 @@ function BusinessCardBanner({ businessData, isPending, isLoading, onClick }: Bus
         <div className="group block">
             <Card className="relative overflow-hidden hover:border-border transition-colors">
                 <MiniCardPreview />
-                <CardContent className="pt-6 max-w-[60%]">
+                <CardContent className="pt-6 mt-8 md:mt-0 md:max-w-[60%]">
                     <Badge
                         {...fadeUp(0)}
                         variant="outline"

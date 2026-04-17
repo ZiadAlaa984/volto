@@ -36,6 +36,7 @@ export const SOCIAL_PLATFORMS_GROUPED: SocialPlatformGroup[] = [
     group: "Professional",
     platforms: [
       { key: "linkedin", label: "LinkedIn", icon: "Linkedin", placeholder: "https://linkedin.com/in/username" },
+      { key: "Website", label: "Website", icon: "Globe", placeholder: "https://example.com" },
       { key: "github", label: "GitHub", icon: "Github", placeholder: "https://github.com/username" },
       { key: "gitlab", label: "GitLab", icon: "GitBranch", placeholder: "https://gitlab.com/username" },
       { key: "dribbble", label: "Dribbble", icon: "Dribbble", placeholder: "https://dribbble.com/username" },

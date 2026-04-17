@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 
 type CardItem = {
     title: string;
-    description: string;
+    description: string | null;
     Action?: React.ReactNode;
     content?: React.ReactNode;
 };
@@ -61,12 +61,12 @@ function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }:
         },
         {
             title: "Theme",
-            description: "Change your theme",
+            description: null,
             Action: <ThemeSwitcher />,
         },
         ...(hasCard && cardData?.id ? [{
             title: "Delete Card",
-            description: "Delete your card",
+            description: null,
             Action: (
                 <AlertDialogShared
                     onClick={() => deleteCard(cardData)}
@@ -78,7 +78,7 @@ function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }:
             ),
         }] : [{
             title: "Create Card",
-            description: "Create your card",
+            description: null,
             Action: (
                 <Button onClick={() => router.push(Router.ONBOARDING)}>
                     Create Card
@@ -87,7 +87,7 @@ function SettingTab({ hasCard, isLoadingCard, cardData, deleteCard, isPending }:
         }]),
         {
             title: "Delete Account",
-            description: "Delete your account",
+            description: null,
             Action: (
                 <AlertDialogShared
                     onClick={deleteAccount}
