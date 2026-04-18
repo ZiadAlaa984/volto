@@ -115,3 +115,9 @@ export function formatDate(value: string): string {
   if (isNaN(date.getTime())) return value          // plain text → show as-is
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+
+export const formatFileName = (name: string) => {
+  const ext = name.split('.').pop(); // get extension (jpg)
+  const base = name.slice(0, 5);     // first 5 chars
+  return `${base}... .${ext}`;
+};

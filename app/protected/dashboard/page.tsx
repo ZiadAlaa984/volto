@@ -13,6 +13,8 @@ import useBusinessInfo from '@/hooks/useBusinessInfo'
 import { DEFAULT_HOURS } from '@/lib/Schema/InfoBusiness'
 import { useRouter } from 'next/navigation'
 import { catchAsync, toastShared } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
+import Loading from '@/app/loading'
 
 function Page() {
     const router = useRouter()
@@ -32,14 +34,13 @@ function Page() {
             return
         }
 
-
-        // Already has business — just navigate
+        // ✅ Already has business — just navigate
         if (businessData) {
             router.push(Router.DASHBOARD.businessCard)
             return
         }
 
-        // Update card type first, then create business regardless of stale cardData
+        // ✅ Create flow — update card type then create business
         await updateCardType({ cardId: cardData.id, card_type: "business" })
 
         await createBusiness({
@@ -49,8 +50,21 @@ function Page() {
             menu: null,
             video_url: '',
         })
+
+        // ✅ Just toast — don't navigate. User clicks again to go to business page
+        // (navigation happens above when businessData exists on next click)
+        toastShared({
+            title: "Business card created successfully",
+            description: "Click 'View Business' to manage your business card.",
+            variant: "success",
+        })
     })
 
+    if (isLoading) {
+        return (
+            <Loading />
+        )
+    }
 
     return (
         <div className="min-h-screen flex flex-col gap-6">
@@ -86,7 +100,7 @@ function BusinessCardBanner({ businessData, isPending, isLoading, onClick }: Bus
         <div className="group block">
             <Card className="relative overflow-hidden hover:border-border transition-colors">
                 <MiniCardPreview />
-                <CardContent className="pt-6 mt-8 md:mt-0 md:max-w-[60%]">
+                <CardContent className="pt-6 mt-6 md:mt-0 md:max-w-[60%]">
                     <Badge
                         {...fadeUp(0)}
                         variant="outline"
@@ -100,17 +114,18 @@ function BusinessCardBanner({ businessData, isPending, isLoading, onClick }: Bus
                     </Badge>
 
                     <h3 className="text-lg font-medium mb-1.5 capitalize">
-                        {hasExisting ? 'View your business card' : 'Make your first business card'}
+                        {isLoading ? <Skeleton className="h-5 w-48" /> : hasExisting ? 'View your business card' : 'Make your first business card'}
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                        {hasExisting
+
+                        {isLoading ? <Skeleton className="h-4 w-64" /> : hasExisting
                             ? 'View your business card and manage your information.'
                             : 'Share who you are with one beautiful link — your bio, links, and identity in one place.'
                         }
                     </p>
 
                     <Button onClick={onClick} disabled={isPending || isLoading}>
-                        {isPending ? 'Creating...' : hasExisting ? 'View Business' : 'Get started'}
+                        {isLoading ? <Skeleton className="h-5 w-24" /> : isPending ? 'Creating...' : hasExisting ? 'View Business' : 'Get started'}
                         <ArrowRight className="w-3.5 h-3.5" />
                     </Button>
                 </CardContent>

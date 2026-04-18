@@ -4,11 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { LinkIcon, Loader2Icon, MapPinIcon, PlusIcon, XIcon } from "lucide-react";
+import { Info, LinkIcon, Loader2Icon, MapPinIcon, PlusIcon, XIcon } from "lucide-react";
 import { Location } from "@/lib/Schema/InfoBusiness";
 import { useState } from "react";
 import useResolvedMapsUrl from "@/hooks/useResolvedMapsUrl";
-
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { MapsLabel } from "./MapsLabel";
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const MAX_LOCATIONS = 3;
@@ -217,7 +222,7 @@ function MapsForm({ onAdd }: MapsFormProps) {
                 />
             </div>
             <div className="space-y-1.5">
-                <Label htmlFor="maps-url">Google Maps link</Label>
+                <MapsLabel />
                 <Input
                     id="maps-url"
                     type="url"
@@ -226,10 +231,6 @@ function MapsForm({ onAdd }: MapsFormProps) {
                     onChange={(e) => setUrl(e.target.value)}
                 />
                 {hint}
-                <p className="text-xs text-muted-foreground">
-                    Open Google Maps → find your location → copy{" "}
-                    <strong>any link</strong> (short or full) → paste here
-                </p>
             </div>
             <Button
                 type="button"

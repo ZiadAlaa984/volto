@@ -8,7 +8,7 @@ import {
     type FileWithPreview,
 } from "@/hooks/use-file-upload"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { cn } from "@/lib/utils"
+import { cn, formatFileName } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { CircleAlertIcon, CameraIcon, UserIcon, XIcon } from 'lucide-react'
 
@@ -165,8 +165,9 @@ export function AvatarUpload({
             </div>
 
             <div className="space-y-0.5 text-center">
-                <p className="text-sm font-medium">{fileName}</p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-sm font-medium">
+                    {formatFileName(fileName)}
+                </p>                <p className="text-muted-foreground text-xs">
                     PNG, JPG up to {formatBytes(maxSize)}
                 </p>
             </div>

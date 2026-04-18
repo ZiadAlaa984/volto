@@ -8,6 +8,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Suspense } from "react";
 import QueryProvider from "@/providers/QueryProvider";
 import Loading from "./loading";
+import { TooltipProvider } from "@/components/ui/tooltip"
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -37,7 +38,7 @@ export default function RootLayout({
             <AuthProvider>
               <QueryProvider>
                 <ToasterClient />
-                {children}
+                <TooltipProvider>{children}</TooltipProvider>
                 <Analytics />
               </QueryProvider>
             </AuthProvider>

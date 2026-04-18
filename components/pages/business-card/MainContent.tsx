@@ -16,12 +16,19 @@ import Loading from "@/app/loading"
 export default function MainContent() {
     const router = useRouter()
     const { cardData, isLoadingCard } = useCard()
-    const { businessData, isLoading: isBusinessLoading, updateBusiness, isPending, isTogglingReviews, toggleActiveReviews } =
-        useBusinessInfo(cardData?.id, cardData)
+    const {
+        businessData,
+        isLoading: isBusinessLoading,
+        updateBusiness,
+        isPending,
+        isTogglingReviews,
+        toggleActiveReviews,
+    } = useBusinessInfo(cardData?.id, cardData)
 
+    // ✅ Stay in loading state until BOTH queries have fully settled
+    // cardData === undefined means the query hasn't returned yet
     const isLoading = isLoadingCard || isBusinessLoading || cardData === undefined
 
-    // ✅ useMemo BEFORE any early returns
     const tabs: GooeyTab[] = useMemo(() => [
         {
             slug: "info-card",
@@ -65,9 +72,13 @@ export default function MainContent() {
     ], [cardData?.id, businessData, isLoading, updateBusiness, isPending, isTogglingReviews, toggleActiveReviews])
 
     useEffect(() => {
+        // ✅ Wait until ALL queries are done before checking for missing data
         if (isLoading) return
 
-        if (!businessData || !cardData) {
+        // ✅ Only redirect if BOTH queries finished AND data is confirmed missing
+        // cardData === null means query returned but found nothing
+        // cardData === undefined is still loading — already handled above
+        if (cardData === null || !businessData) {
             toastShared({
                 title: "Business or Card not found",
                 description: "Please check your business or card data",
@@ -77,11 +88,12 @@ export default function MainContent() {
         }
     }, [isLoading, businessData, cardData, router])
 
-    // ✅ Early returns AFTER all hooks
     if (isLoading) return <Loading />
     if (!businessData || !cardData) return null
 
-    return <div className=" min-h-screen flex flex-col">
-        <GooeyTabs tabs={tabs} contentPadding="p-4 md:p-12" />
-    </div>
+    return (
+        <div className="min-h-screen flex flex-col">
+            <GooeyTabs tabs={tabs} contentPadding="p-4 md:p-12" />
+        </div>
+    )
 }
