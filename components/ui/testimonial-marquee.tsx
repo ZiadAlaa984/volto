@@ -81,7 +81,7 @@ MarqueeStyles.displayName = "MarqueeStyles"
 const MarqueeRow = React.memo(({
     children,
     direction = "left",
-    speed = 80,
+    speed = 50, // px per second
     className,
     pauseOnHover = true,
 }: {
@@ -90,25 +90,37 @@ const MarqueeRow = React.memo(({
     speed?: number
     className?: string
     pauseOnHover?: boolean
-}) => (
-    <div className={cn("group flex overflow-hidden p-2 [--gap:1rem]", className)}>
-        {[0, 1].map((i) => (
-            <div
-                key={i}
-                aria-hidden={i === 1}
-                className={cn(
-                    "flex shrink-0 justify-start [gap:var(--gap)] min-w-full pr-[var(--gap)] will-change-transform [backface-visibility:hidden]",
-                    direction === "left" ? "animate-marquee-left" : "animate-marquee-right",
-                    pauseOnHover && "group-hover:[animation-play-state:paused]"
-                )}
-                style={{ "--duration": `${speed}s` } as React.CSSProperties}
-            >
-                {children}
-            </div>
-        ))}
-    </div>
-))
-MarqueeRow.displayName = "MarqueeRow"
+}) => {
+    const contentRef = React.useRef<HTMLDivElement>(null)
+    const [duration, setDuration] = React.useState(0)
+
+    React.useEffect(() => {
+        if (!contentRef.current) return
+        const width = contentRef.current.scrollWidth / 2
+        const d = width / speed
+        setDuration(d)
+    }, [children, speed])
+
+    return (
+        <div className={cn("group flex overflow-hidden p-2 [--gap:1rem]", className)}>
+            {[0, 1].map((i) => (
+                <div
+                    key={i}
+                    ref={i === 0 ? contentRef : undefined}
+                    aria-hidden={i === 1}
+                    className={cn(
+                        "flex shrink-0 justify-start [gap:var(--gap)] min-w-full pr-[var(--gap)]",
+                        direction === "left" ? "animate-marquee-left" : "animate-marquee-right",
+                        pauseOnHover && "group-hover:[animation-play-state:paused]"
+                    )}
+                    style={{ "--duration": `${duration}s` } as React.CSSProperties}
+                >
+                    {children}
+                </div>
+            ))}
+        </div>
+    )
+})
 
 // ── TestimonialCard ───────────────────────────────────────────────────────────
 
