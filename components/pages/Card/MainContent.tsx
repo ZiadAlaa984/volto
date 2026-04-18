@@ -51,7 +51,7 @@ export default function MainContent({ CardData, businessData, reviews }: { CardD
                 animate="show"
                 className="flex justify-center items-start w-full"
             >
-                <Card className="md:max-w-[400px] flex flex-col overflow-hidden h-screen md:h-full rounded-none md:rounded-xl w-full  ">
+                <Card className="md:max-w-[400px] flex flex-col overflow-hidden min-h-screen md:h-full rounded-none md:rounded-xl w-full  ">
                     <CardHeader className="flex flex-row items-center w-full justify-between">
                         <Link href="/">
                             <Button size={"icon"} variant={"outline"}>
