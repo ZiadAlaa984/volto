@@ -206,8 +206,8 @@ function OpenHoursEditor({ initialHours = DEFAULT_HOURS, onChange }: OpenHoursEd
                                                 Open all day
                                             </span>
                                         ) : (
-                                            <div className="flex flex-col gap-1 w-full">
-                                                <div className="flex items-center w-full justify-between gap-1.5">
+                                            <div className="flex flex-col gap-1 ">
+                                                <div className="flex items-center  justify-between gap-1.5">
                                                     <Input
                                                         type="time"
                                                         value={open ?? '09:00'}
