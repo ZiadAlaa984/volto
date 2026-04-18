@@ -81,5 +81,7 @@ export default function MainContent() {
     if (isLoading) return <Loading />
     if (!businessData || !cardData) return null
 
-    return <GooeyTabs tabs={tabs} contentPadding="p-4 md:p-12" />
+    return <div className=" min-h-screen flex flex-col">
+        <GooeyTabs tabs={tabs} contentPadding="p-4 md:p-12" />
+    </div>
 }

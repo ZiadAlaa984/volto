@@ -41,10 +41,10 @@ export default function GooeyTabs({ tabs, contentPadding = "p-4 md:p-12" }: Gooe
     )
 
     return (
-        <div className="relative min-h-[700px] flex justify-center font-calendas md:text-base text-xs sm:text-sm">
+        <div className="relative min-h-screen flex flex-col font-calendas md:text-base text-xs sm:text-sm">
             <GooeySvgFilter id="gooey-filter" strength={screenSize.lessThan("md") ? 8 : 15} />
 
-            <div className="w-full relative">
+            <div className="w-full flex flex-col flex-1 relative">
                 <div className="absolute inset-0" style={{ filter: "url(#gooey-filter)" }}>
                     <div className="flex flex-col">
                         {/* Animated active-tab indicator */}
@@ -67,7 +67,7 @@ export default function GooeyTabs({ tabs, contentPadding = "p-4 md:p-12" }: Gooe
                         </div>
 
                         {/* Tab content panel */}
-                        <div className="w-full overflow-hidden bg-card rounded-b-xl">
+                        <div className={`w-full overflow-hidden bg-card rounded-b-xl flex-1 flex flex-col`}>
                             <AnimatePresence mode="popLayout">
                                 <motion.div
                                     key={resolvedTab}

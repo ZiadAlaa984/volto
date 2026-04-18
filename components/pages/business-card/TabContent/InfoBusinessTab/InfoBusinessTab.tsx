@@ -179,7 +179,7 @@ function InfoBusinessTab({
                     onChange={setMenuTab}
                 />
             ),
-            content: <MenuSection control={form.control} />,
+            content: <MenuSection control={form.control} activeTab={menuTab} />,
         },
     ];
 
