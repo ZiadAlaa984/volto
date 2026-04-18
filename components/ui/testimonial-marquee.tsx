@@ -121,41 +121,51 @@ const TestimonialCard = React.memo(({
 }) => {
     const dateLabel = formatDate(item.created_at)
     const hasText = !!item.review_text?.trim()
+    const initials = getInitials(item.customer_name)
 
-    const baseCard = variant === "flush"
-        ? "relative group flex h-auto w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-none border-r border-border bg-black/5 dark:bg-white/5 p-6 transition-all hover:bg-black/10 dark:hover:bg-white/10 transform-gpu [backface-visibility:hidden]"
-        : "relative group flex h-auto w-[350px] shrink-0 flex-col justify-between overflow-hidden rounded-2xl border border-border bg-black/5 dark:bg-white/5 p-6 transition-all hover:bg-black/10 dark:hover:bg-white/10 hover:shadow-xl hover:shadow-black/5 hover:-translate-y-1 transform-gpu [backface-visibility:hidden]"
+    // deterministic color from name
+    const colors = [
+        "bg-violet-100 text-violet-700",
+        "bg-blue-100 text-blue-700",
+        "bg-emerald-100 text-emerald-700",
+        "bg-amber-100 text-amber-700",
+        "bg-rose-100 text-rose-700",
+        "bg-cyan-100 text-cyan-700",
+    ]
+    const colorClass = colors[
+        item.customer_name.charCodeAt(0) % colors.length
+    ]
+
+    const baseCard =
+        variant === "flush"
+            ? "relative group flex h-auto w-[320px] shrink-0 flex-col gap-3 border-r border-border bg-background p-5 transition-colors hover:bg-muted/40"
+            : "relative group flex h-auto w-[320px] shrink-0 flex-col gap-3 rounded-2xl border border-border bg-card p-5 transition-all hover:shadow-md hover:-translate-y-0.5 transform-gpu"
 
     return (
         <div className={baseCard}>
-            <div className="absolute inset-0 bg-gradient-to-br from-black/5 dark:from-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-
-            <div className="relative z-10 flex flex-col gap-4">
-                {/* Stars */}
-                <StarRating rating={item.rating} />
-
-                {/* Review text — only rendered if it exists */}
-                {hasText && (
-                    <p className={`text-sm leading-relaxed text-start  ${cairo.className}  line-clamp-3`}>
-                        &quot;{item.review_text}&quot;
-                    </p>
-                )}
-
-                {/* Customer info */}
-                <div className="flex items-center gap-3 pt-2">
-                    <div className="flex flex-col">
-                        <span className="text-sm font-medium text-foreground">
-                            {item.customer_name}
-                        </span>
-                        {/* Date — only rendered if it exists */}
-                        {dateLabel && (
-                            <span className="text-xs text-muted-foreground">
-                                {dateLabel}
-                            </span>
-                        )}
-                    </div>
+            {/* top row: avatar + name + date */}
+            <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${colorClass}`}>
+                    {initials}
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <span className={`text-sm font-medium truncate ${cairo.className}`}>{item.customer_name}</span>
+                    {dateLabel && (
+                        <span className={`text-xs text-muted-foreground ${cairo.className}`}>{dateLabel}</span>
+                    )}
+                </div>
+                {/* stars pushed to right */}
+                <div className="ml-auto shrink-0">
+                    <StarRating rating={item.rating} />
                 </div>
             </div>
+
+            {/* review text */}
+            {hasText && (
+                <p className={`text-sm leading-relaxed text-muted-foreground line-clamp-3 ${cairo.className}`}>
+                    "{item.review_text}"
+                </p>
+            )}
         </div>
     )
 })
@@ -167,7 +177,7 @@ export function TestimonialMarquee({
     items,
     variant = "default",
     className,
-    speed = 80,
+    speed = 60,
     containerClassName,
 }: TestimonialMarqueeProps) {
     const cnContainer = cn(containerClassName, className)
@@ -196,7 +206,7 @@ export function TestimonialMarquee({
                 </div>
 
             ) : variant === "stacked" ? (
-                <div className={cn("flex flex-col gap-2 py-8 overflow-hidden h-[600px] justify-center rotate-[-2deg] scale-110", containerClassName)}>
+                <div className={cn("flex flex-col gap-2 py-6 overflow-hidden h-[600px] justify-center rotate-[-2deg] scale-110", containerClassName)}>
                     <div className="absolute inset-0 z-10 bg-gradient-to-r from-background via-transparent to-background pointer-events-none" />
                     <MarqueeRow speed={speed * 1.5} direction="left" className="[--gap:0.75rem]">
                         {itemsToDisplay.slice(0, third).map((item, i) => <TestimonialCard key={`s-row1-${i}`} item={item} />)}
@@ -231,7 +241,7 @@ export function TestimonialMarquee({
                 </div>
 
             ) : (
-                <div className={cn("py-8 overflow-hidden", cnContainer)}>
+                <div className={cn(" overflow-hidden", cnContainer)}>
                     <MarqueeRow speed={speed} direction="left">
                         {itemsToDisplay.map((item, i) => <TestimonialCard key={`default-${i}`} item={item} />)}
                     </MarqueeRow>

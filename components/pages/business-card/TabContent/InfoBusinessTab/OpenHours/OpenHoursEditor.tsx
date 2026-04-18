@@ -268,11 +268,11 @@ export function OpenHoursBadge({ hours }: { hours: OpeningHours }) {
             <span className="relative flex h-2 w-2">
                 <span className={[
                     "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
-                    status.isOpen ? "bg-emerald-500" : "bg-muted-foreground"
+                    status.isOpen ? "bg-emerald-500" : "bg-red-500"
                 ].join(" ")} />
                 <span className={[
                     "relative inline-flex h-2 w-2 rounded-full",
-                    status.isOpen ? "bg-emerald-500" : "bg-muted-foreground"
+                    status.isOpen ? "bg-emerald-500" : "bg-red-500"
                 ].join(" ")} />
             </span>
             {status.isOpen ? "Open now" : "Closed"}

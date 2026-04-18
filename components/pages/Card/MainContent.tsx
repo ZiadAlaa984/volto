@@ -2,26 +2,24 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Card, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { CardType } from "@/types/onboarding";
 import { SOCIAL_KEYS } from "@/lib/social-platforms";
 import ProfileHeader from "./ProfileHeader";
 import logo from "@/app/logo.svg"
 import LinkButtons from "./LinkButtons";
-import SocialIcons from "./SocialIcons";
-import QrCodeTrigger from "./QrCodeTrigger";
-import CardFooter from "./CardFooter";
-import QrCodeModal from "./QrCodeModal";
+
 import { BusinessType } from "@/types/business";
 import Locations from "./Locations";
-import Reviews from "./Review/Reviews";
 import { ReviewsResult } from "@/services/queries/getReviews";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, QrCode, Share, Share2 } from "lucide-react";
+import { Share } from "lucide-react";
 import ShareDialog from "./QrCodeModal";
 import { DialogTrigger } from "@/components/ui/dialog";
 import Image from "next/image";
 import Link from "next/link";
+import VideoSection from "./VideoSection";
+import Reviews from "./Review/Reviews";
 
 const cardVariant = {
     hidden: { opacity: 0, scale: 0.96, y: 24 },
@@ -34,7 +32,6 @@ const cardVariant = {
 };
 
 export default function MainContent({ CardData, businessData, reviews }: { CardData: CardType; businessData: BusinessType | null; reviews: ReviewsResult | null }) {
-    console.log("🚀 ~ MainContent ~ CardData:", CardData)
     const [qrOpen, setQrOpen] = useState(false);
 
     const socialLinks = CardData?.links ?? [];
@@ -78,19 +75,31 @@ export default function MainContent({ CardData, businessData, reviews }: { CardD
                         </ShareDialog>
 
                     </CardHeader>
-                    <div className="w-full flex px-4 flex-col items-center gap-6">
-                        <ProfileHeader CardData={CardData} businessData={businessData} />
-                        {/* <LinkButtons links={otherLinks} />
+                    <CardContent className="flex flex-col gap-4">
+                        <ProfileHeader socialMedia={socialMedia} CardData={CardData} businessData={businessData} />
+                        <LinkButtons links={otherLinks} />
+                        <VideoSection src={businessData?.video_url || ""} />
                         {businessData?.locations && <Locations locations={businessData?.locations} />}
-                        <SocialIcons links={socialMedia} />
-                        <QrCodeTrigger onOpen={() => setQrOpen(true)} />
-                        <CardFooter /> */}
-                    </div>
-                    {/* {
-                        businessData?.active_reviews && reviews && (
-                            <Reviews activeReviews={businessData?.active_reviews ?? false} reviews={reviews} cardId={CardData?.id ?? ""} />
-                        )
-                    } */}
+                        {reviews && <Reviews reviews={reviews} cardId={CardData?.id || ""} activeReviews={businessData?.active_reviews || false} />}
+                    </CardContent>
+                    <CardFooter className="mx-auto">
+                        <motion.p
+                            className="text-xs pb-4 text-muted-foreground"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.7, duration: 0.4 }}
+                        >
+                            Create your own at{" "}
+                            <a
+                                href={origin}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transition-colors font-bold hover:text-foreground"
+                            >
+                                Volto
+                            </a>
+                        </motion.p>
+                    </CardFooter>
                 </Card>
             </motion.div>
 

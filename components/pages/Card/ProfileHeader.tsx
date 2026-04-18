@@ -6,6 +6,7 @@ import { CardHeader } from "@/components/ui/card";
 import { CardType } from "@/types/onboarding";
 import { BusinessType } from "@/types/business";
 import { OpenHoursBadge } from "../business-card/TabContent/InfoBusinessTab/OpenHours/OpenHoursEditor";
+import SocialIcons from "./SocialIcons";
 
 export function getInitials(name?: string) {
     return name
@@ -13,9 +14,9 @@ export function getInitials(name?: string) {
         : "?";
 }
 
-export default function ProfileHeader({ CardData, businessData }: { CardData: CardType; businessData: BusinessType | null }) {
+export default function ProfileHeader({ socialMedia, CardData, businessData }: { socialMedia: { platform: string; url: string }[]; CardData: CardType; businessData: BusinessType | null }) {
     return (
-        <CardHeader className="flex flex-col items-center gap-4">
+        <CardHeader className="flex md:pb-0 flex-col items-center gap-4">
             {CardData?.profile_picture && (
                 <motion.div
                     initial={{ opacity: 0, scale: 0.7 }}
@@ -36,7 +37,7 @@ export default function ProfileHeader({ CardData, businessData }: { CardData: Ca
             )}
 
             <motion.div
-                className="text-center space-y-2"
+                className="text-center flex justify-center items-center flex-col gap-3"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
@@ -49,9 +50,12 @@ export default function ProfileHeader({ CardData, businessData }: { CardData: Ca
                         {CardData.bio}
                     </p>
                 )}
-                {/* {businessData?.opening_hours && (
+                {businessData?.opening_hours && (
                     <OpenHoursBadge hours={businessData.opening_hours} />
-                )} */}
+                )}
+
+                <SocialIcons links={socialMedia} />
+
             </motion.div>
         </CardHeader>
     );
