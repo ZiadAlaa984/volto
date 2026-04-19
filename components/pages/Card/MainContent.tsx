@@ -10,7 +10,6 @@ import logo from "@/app/logo.svg"
 import LinkButtons from "./LinkButtons";
 
 import { BusinessType } from "@/types/business";
-import Locations from "./Locations";
 import { ReviewsResult } from "@/services/queries/getReviews";
 import { Button } from "@/components/ui/button";
 import { Share } from "lucide-react";
@@ -20,6 +19,8 @@ import Image from "next/image";
 import Link from "next/link";
 import VideoSection from "./VideoSection";
 import Reviews from "./Review/Reviews";
+import { MenuSection } from "./MenuSection";
+import LocationSection from "./LocationSection";
 
 const cardVariant = {
     hidden: { opacity: 0, scale: 0.96, y: 24 },
@@ -78,8 +79,9 @@ export default function MainContent({ CardData, businessData, reviews }: { CardD
                     <CardContent className="flex flex-col gap-4">
                         <ProfileHeader socialMedia={socialMedia} CardData={CardData} businessData={businessData} />
                         <LinkButtons links={otherLinks} />
+                        {businessData?.menu && <MenuSection menus={businessData.menu} />}
+                        {businessData?.locations && <LocationSection locations={businessData.locations} />}
                         <VideoSection src={businessData?.video_url || ""} />
-                        {businessData?.locations && <Locations locations={businessData?.locations} />}
                         {reviews && <Reviews reviews={reviews} cardId={CardData?.id || ""} activeReviews={businessData?.active_reviews || false} />}
                     </CardContent>
                     <CardFooter className="mx-auto">
@@ -91,7 +93,7 @@ export default function MainContent({ CardData, businessData, reviews }: { CardD
                         >
                             Create your own at{" "}
                             <a
-                                href={origin}
+                                href={"./"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="transition-colors font-bold hover:text-foreground"

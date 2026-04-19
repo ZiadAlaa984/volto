@@ -2,11 +2,15 @@ import { z } from "zod";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+export type PlatformActionType = "url" | "copy" | "tel" | "email";
+
 export type SocialPlatform = {
   key: string;
   label: string;
   icon: string;
   placeholder: string;
+  /** How clicking this platform's link should behave */
+  actionType?: PlatformActionType;
 };
 
 export type SocialPlatformGroup = {
@@ -70,7 +74,7 @@ export const SOCIAL_PLATFORMS_GROUPED: SocialPlatformGroup[] = [
   {
     group: "Messaging",
     platforms: [
-      { key: "whatsapp", label: "WhatsApp", icon: "MessageCircle", placeholder: "https://wa.me/1234567890 or +1234567890" },
+      { key: "whatsapp", label: "WhatsApp", icon: "MessageCircle", placeholder: "https://wa.me/1234567890 or +1234567890", actionType: "tel" },
       { key: "telegram", label: "Telegram", icon: "Send", placeholder: "https://t.me/username" },
       { key: "discord", label: "Discord", icon: "Headphones", placeholder: "https://discord.gg/invitecode" },
       { key: "signal", label: "Signal", icon: "ShieldCheck", placeholder: "https://signal.me/#p/username" },
@@ -89,10 +93,8 @@ export const SOCIAL_PLATFORMS_GROUPED: SocialPlatformGroup[] = [
   {
     group: "Other",
     platforms: [
-      // In SOCIAL_PLATFORMS_GROUPED, "Other" group:
-      { key: "email", label: "Email", icon: "Mail", placeholder: "you@example.com or mailto:you@example.com" },
-      { key: "phone", label: "Phone", icon: "Phone", placeholder: "+1234567890 or tel:+1234567890" },
-      // In "Messaging" group:
+      { key: "email", label: "Email", icon: "Mail", placeholder: "you@example.com or mailto:you@example.com", actionType: "email" },
+      { key: "phone", label: "Phone", icon: "Phone", placeholder: "+1234567890 or tel:+1234567890", actionType: "tel" },
       { key: "other", label: "Other", icon: "Link", placeholder: "https://..." },
     ],
   },
@@ -100,28 +102,75 @@ export const SOCIAL_PLATFORMS_GROUPED: SocialPlatformGroup[] = [
 
 // ── Flat list for lookups ─────────────────────────────────────────────────────
 
-export const SOCIAL_PLATFORMS: SocialPlatform[] = SOCIAL_PLATFORMS_GROUPED.flatMap(g => g.platforms);
+export const SOCIAL_PLATFORMS: SocialPlatform[] = SOCIAL_PLATFORMS_GROUPED.flatMap(
+  (g) => g.platforms
+);
 
 export type PlatformKey = string;
 
 export const getPlatform = (key: string): SocialPlatform =>
   SOCIAL_PLATFORMS.find((p) => p.key === key) ?? SOCIAL_PLATFORMS.at(-1)!;
 
-// ── Social Keys (all general social/content platforms) ────────────────────────
+// ── platformAction ────────────────────────────────────────────────────────────
+// Resolves what happens when a user clicks a link based on its platform config.
+// Returns a plain () => void so it plugs straight into ActionItem.action.
+
+export function platformAction(platformKey: string, url: string): () => void {
+  const { actionType } = getPlatform(platformKey);
+
+  switch (actionType) {
+    case "tel": {
+      // Normalize to a dialable number:
+      // accepts "tel:+123", "https://wa.me/123", or plain "+123"
+      const raw = url.startsWith("tel:")
+        ? url
+        : url.startsWith("https://wa.me/")
+          ? `tel:+${url.replace("https://wa.me/", "")}`
+          : /^\+?[\d\s\-().]+$/.test(url)
+            ? `tel:${url}`
+            : url;
+
+      return () => window.open(raw, "_self");
+    }
+
+    case "email": {
+      const mailto = url.startsWith("mailto:") ? url : `mailto:${url}`;
+      return () => window.open(mailto, "_self");
+    }
+
+    case "copy": {
+      return () => navigator.clipboard.writeText(url);
+    }
+
+    case "url":
+    default:
+      return () => window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
+// ── subtitle hint per actionType ──────────────────────────────────────────────
+// Useful for dialog item subtitles (e.g. "Tap to call" vs "Open link")
+
+export function platformSubtitle(platformKey: string, url: string): string {
+  const { actionType } = getPlatform(platformKey);
+  switch (actionType) {
+    case "tel": return url.replace("https://wa.me/", "+").replace("tel:", "");
+    case "email": return url.replace("mailto:", "");
+    case "copy": return "Tap to copy";
+    default: return url;
+  }
+}
+
+// ── Social Keys ───────────────────────────────────────────────────────────────
 
 export const SOCIAL_KEYS: string[] = [
-  // Social Media
-  "twitter", "instagram", "facebook", "threads",
+  "twitter", "instagram", "facebook", "threads", "whatsapp", "phone",
   "snapchat", "pinterest", "reddit", "bluesky", "mastodon", "tumblr",
-  // Video & Streaming
-  "youtube", "tiktok", "twitch", "vimeo", "kick",
-  // Music
+  "youtube", "tiktok", "twitch", "vimeo", "kick", "email",
   "spotify", "soundcloud", "applemusic", "bandcamp",
 ];
 
 // ── Schema ────────────────────────────────────────────────────────────────────
-
-// ── Helpers for URL validation ────────────────────────────────────────────────
 
 const EMAIL_KEYS = ["email"];
 const PHONE_KEYS = ["phone", "whatsapp"];
@@ -137,40 +186,25 @@ export const linkItemSchema = z.object({
   const { platform, url } = data;
 
   if (EMAIL_KEYS.includes(platform)) {
-    // Accept "mailto:you@example.com" or plain "you@example.com"
     const email = url.startsWith("mailto:") ? url.slice(7) : url;
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    if (!valid) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["url"],
-        message: "Must be a valid email address",
-      });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["url"], message: "Must be a valid email address" });
     }
   } else if (PHONE_KEYS.includes(platform)) {
-    // Accept "tel:+123..." / "https://wa.me/..." or plain digits/+
     const isTel = /^tel:\+?[\d\s\-().]+$/.test(url);
     const isWaMe = /^https:\/\/wa\.me\/\d+/.test(url);
     const isPlain = /^\+?[\d\s\-().]{7,}$/.test(url);
     if (!isTel && !isWaMe && !isPlain) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["url"],
-        message: "Must be a valid phone number or wa.me link",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["url"], message: "Must be a valid phone number or wa.me link" });
     }
   } else {
-    // All other platforms: must be a valid https URL
     const result = z.string().url("Must be a valid URL (include https://)").safeParse(url);
     if (!result.success) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["url"],
-        message: "Must be a valid URL (include https://)",
-      });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["url"], message: "Must be a valid URL (include https://)" });
     }
   }
 });
+
 export const linksFormSchema = z.object({
   links: z.array(linkItemSchema).min(1, "Add at least one link"),
 });
@@ -179,12 +213,8 @@ export type LinkItemFormValues = z.infer<typeof linkItemSchema>;
 export type LinksFormValues = z.infer<typeof linksFormSchema>;
 
 export const defaultLinkItem = (): LinkItemFormValues => ({
-  id: undefined,
-  card_id: undefined,
-  order_num: undefined,
-  platform: "other",
-  title: "",
-  url: "",
+  id: undefined, card_id: undefined, order_num: undefined,
+  platform: "other", title: "", url: "",
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
